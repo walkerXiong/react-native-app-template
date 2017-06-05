@@ -14,6 +14,7 @@ import AppStore from '../stores/testView/test';
 
 import CountDownText from '../components/CountDownText';
 import DirectText from '../components/DirectText';
+import AniLinearGradient from '../components/AniLinearGradient';
 
 @inject('store') @observer
 class CountAge extends Component {
@@ -70,8 +71,14 @@ class ReduxTestPage extends Component {
                     onPress={() => this._countDownText.startCountDown(998)}>
                     <Text>{'reset countTime!!!'}</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                    style={Styles.btn}
+                    onPress={() => this._AniLinearGradient && this._AniLinearGradient.startChange()}>
+                    <Text>{'start ani linear'}</Text>
+                </TouchableOpacity>
                 <CountDownText ref={(ref) => this._countDownText = ref} countTime={120} countInterval={100} color={Success ? 'red':'blue'}/>
                 <DirectText ref={(ref) => this._directText = ref} text={'direct Text'}/>
+                <AniLinearGradient aniDuration={1000} ref={(ref) => this._AniLinearGradient = ref}/>
             </View>
         )
     }
