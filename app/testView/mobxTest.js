@@ -12,6 +12,9 @@ import {observable, action, autorun, computed} from 'mobx';
 import {observer, Provider, inject} from 'mobx-react/native';
 import AppStore from '../stores/testView/test';
 
+import CountDownText from '../components/CountDownText';
+import DirectText from '../components/DirectText';
+
 @inject('store') @observer
 class CountAge extends Component {
     componentDidMount() {
@@ -37,8 +40,10 @@ class ReduxTestPage extends Component {
     }
 
     _nextPage() {
-        window.console.log(this.props.navigation);
-        this.props.navigation.navigate('NextPage');
+        // window.console.log(this.props.navigation);
+        // this.props.navigation.navigate('NextPage');
+        this._countDownText.startCountDown();
+        this._directText.setText('heheda');
     }
 
     render() {
@@ -60,6 +65,13 @@ class ReduxTestPage extends Component {
                     onPress={() => this._nextPage()}>
                     <Text>{'press to jump router!!!'}</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                    style={Styles.btn}
+                    onPress={() => this._countDownText.startCountDown(998)}>
+                    <Text>{'reset countTime!!!'}</Text>
+                </TouchableOpacity>
+                <CountDownText ref={(ref) => this._countDownText = ref} countTime={120} countInterval={100} color={Success ? 'red':'blue'}/>
+                <DirectText ref={(ref) => this._directText = ref} text={'direct Text'}/>
             </View>
         )
     }
