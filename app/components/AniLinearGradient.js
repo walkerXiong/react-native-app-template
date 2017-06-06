@@ -3,9 +3,12 @@
  *  this component's main job is to change LinearGradient in animated ,
  *  relay on two lib:
  *  1 react-native-linear-gradient // realize linear gradient Git: https://github.com/react-native-community/react-native-linear-gradient
+ *  Git: https://github.com/react-native-community/react-native-linear-gradient
+ *  PS: need to link naive android or iOS
  *  2 chroma-js // lib to manage color, use it to realize animation
  *  Git: https://github.com/gka/chroma.js/
  *  Doc: https://gka.github.io/chroma.js/
+ *  install: npm install chroma-js --save
  */
 import React, {Component, PropTypes} from 'react';
 import {
