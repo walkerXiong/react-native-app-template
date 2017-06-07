@@ -12,8 +12,7 @@ import {observable, action, autorun, computed} from 'mobx';
 import {observer, Provider, inject} from 'mobx-react/native';
 import AppStore from '../stores/testView/test';
 
-import CountDownText from '../components/CountDownText';
-import DirectText from '../components/DirectText';
+import ModalActivity from '../components/ModalActivity';
 import NavActivity from '../components/NavActivity';
 
 @inject('store') @observer
@@ -43,8 +42,6 @@ class ReduxTestPage extends Component {
     _nextPage() {
         // window.console.log(this.props.navigation);
         // this.props.navigation.navigate('NextPage');
-        this._countDownText.startCountDown();
-        this._directText.setText('heheda');
     }
 
     render() {
@@ -70,17 +67,13 @@ class ReduxTestPage extends Component {
                     onPress={() => this._nextPage()}>
                     <Text>{'press to jump router!!!'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    style={Styles.btn}
-                    onPress={() => this._countDownText.startCountDown(998)}>
-                    <Text>{'reset countTime!!!'}</Text>
-                </TouchableOpacity>
-                <CountDownText
-                    ref={(ref) => this._countDownText = ref}
-                    countTime={120}
-                    countInterval={100}
-                    color={Success ? 'red':'blue'}/>
-                <DirectText ref={(ref) => this._directText = ref} text={'direct Text'}/>
+                <ModalActivity
+                    wrapStyle={{justifyContent: 'center'}}
+                    containerStyle={{width: 200,height:200,backgroundColor:'#feafea',borderRadius:100}}
+                    visible={Success}
+                    onRequestToClose={() => updateData({Success: !Success})}
+                    allowHardwareBackHideModal={false}
+                    tapBackToHide={true}/>
             </View>
         )
     }
