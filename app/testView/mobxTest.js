@@ -14,7 +14,7 @@ import AppStore from '../stores/testView/test';
 
 import CountDownText from '../components/CountDownText';
 import DirectText from '../components/DirectText';
-import AniLinearGradient from '../components/AniLinearGradient';
+import NavActivity from '../components/NavActivity';
 
 @inject('store') @observer
 class CountAge extends Component {
@@ -53,6 +53,10 @@ class ReduxTestPage extends Component {
         let {updateData} = this.props.store;
         return (
             <View style={Styles.wrap}>
+                <NavActivity
+                    closeButton={{closeZone: 'right', disabled: false}}
+                    leftButton={{disabled: false}}
+                    title={{title: 'HOME'}}/>
                 <Text>{`my Name is: ${userName}`}</Text>
                 <Text>{`server data isSuccess ${Success}`}</Text>
                 <TouchableOpacity
@@ -71,14 +75,12 @@ class ReduxTestPage extends Component {
                     onPress={() => this._countDownText.startCountDown(998)}>
                     <Text>{'reset countTime!!!'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    style={Styles.btn}
-                    onPress={() => this._AniLinearGradient && this._AniLinearGradient.startChange()}>
-                    <Text>{'start ani linear'}</Text>
-                </TouchableOpacity>
-                <CountDownText ref={(ref) => this._countDownText = ref} countTime={120} countInterval={100} color={Success ? 'red':'blue'}/>
+                <CountDownText
+                    ref={(ref) => this._countDownText = ref}
+                    countTime={120}
+                    countInterval={100}
+                    color={Success ? 'red':'blue'}/>
                 <DirectText ref={(ref) => this._directText = ref} text={'direct Text'}/>
-                <AniLinearGradient aniDuration={1000} ref={(ref) => this._AniLinearGradient = ref}/>
             </View>
         )
     }
@@ -102,7 +104,7 @@ const Styles = StyleSheet.create({
     wrap: {
         flex: 1,
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
     },
     btn: {
