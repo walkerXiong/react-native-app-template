@@ -95,20 +95,19 @@ export default class ModalActivity extends Component {
     modalHide() {
         if (this.state.visible === true) {
             let {animationDuration, shadeStartOpacity, initScale, modalDidClose} = this.props;
-            Animated.parallel([
-                Animated.timing(this.state.containerOpacity, {
-                    toValue: shadeStartOpacity,
-                    duration: animationDuration
-                }),
-                Animated.spring(this.state.currScale, {
-                    toValue: initScale,
-                    duration: animationDuration,
-                }),
-                Animated.timing(this.state.shadeOpacity, {
-                    toValue: shadeStartOpacity,
-                    duration: animationDuration
-                })
-            ]).start(() => {
+            //Animated.parallel() callback exec will delay little time , usually is 600ms , so abort it.
+            Animated.spring(this.state.currScale, {
+                toValue: initScale,
+                duration: animationDuration,
+            }).start();
+            Animated.timing(this.state.containerOpacity, {
+                toValue: shadeStartOpacity,
+                duration: animationDuration
+            }).start();
+            Animated.timing(this.state.shadeOpacity, {
+                toValue: shadeStartOpacity,
+                duration: animationDuration
+            }).start(() => {
                 this.setState({visible: false}, () => {
                     modalDidClose instanceof Function && modalDidClose();
                 });
