@@ -3,3 +3,4 @@
  */
 'use strict';
 export const ACTION_LOADING_DONE = 'ACTION_LOADING_DONE';
+export const ACTION_ALERT_SHOW = 'ACTION_ALERT_SHOW';

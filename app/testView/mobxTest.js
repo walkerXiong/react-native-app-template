@@ -14,7 +14,7 @@ import AppStore from '../stores/testView/test';
 import Util from '../utility/util';
 import * as ACTIONS from '../utility/events';
 
-import ModalActivity from '../components/ModalActivity';
+import AlertSys from '../components/AlertSys';
 import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
 
@@ -45,7 +45,24 @@ class ReduxTestPage extends Component {
     _nextPage() {
         // window.console.log(this.props.navigation);
         // this.props.navigation.navigate('NextPage');
-        Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: 20000});
+        //Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: 20000});
+        Util.trigger('MOBX_TEST_ALERT', {
+            alertShow: true,//是否显示alert
+            alertTitle: '这是标题',//标题
+            alertDetail: '没什么详情',//详情
+            alertAttach: '骑士队输球了',//附加说明
+            alertBtnNum: 1,//alert弹窗的button个数
+            alertBtnFont: ['我知道了'],//各个button的文案
+            alertBtnCallback: [() => {
+                let _random = Math.ceil(Math.random() * 10);
+                if (_random <= 3) {
+                    Util.trigger('MOBX_TEST_ALERT', {resetAlert: true});
+                }
+                else {
+                    Util.trigger('MOBX_TEST_ALERT', {alertTitle: 'change title' + _random});
+                }
+            }]
+        });
     }
 
     render() {
@@ -71,13 +88,7 @@ class ReduxTestPage extends Component {
                     onPress={() => this._nextPage()}>
                     <Text>{'press to jump router!!!'}</Text>
                 </TouchableOpacity>
-                <ModalActivity
-                    wrapStyle={{justifyContent: 'center'}}
-                    containerStyle={{width: 200,height:200,backgroundColor:'#feafea',borderRadius:100}}
-                    visible={Success}
-                    onRequestToClose={() => updateData({Success: !Success})}
-                    allowHardwareBackHideModal={false}
-                    tapBackToHide={true}/>
+                <AlertSys showEvent={'MOBX_TEST_ALERT'}/>
                 <Loading/>
             </View>
         )
