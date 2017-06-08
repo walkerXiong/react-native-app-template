@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import shallowCompare from 'react-addons-shallow-compare';
 
+import Util from '../utility/util';
+const debugKeyWord = '[CountDownText]';
 export default class CountDownText extends Component {
     static propTypes = {
         countTime: PropTypes.number,
@@ -71,6 +73,7 @@ export default class CountDownText extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         let {countTime, fontSize, color, textAlign} = this.state;
         return <Text style={{fontSize: fontSize, color: color, textAlign: textAlign}}>{countTime}</Text>
     }

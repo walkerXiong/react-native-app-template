@@ -10,6 +10,8 @@ import {
     Image
 } from 'react-native';
 
+import Util from '../utility/util';
+const debugKeyWord = '[FrameAnimation]';
 export default class FrameAnimation extends Component {
     _aniHandle = -1;
 
@@ -57,6 +59,7 @@ export default class FrameAnimation extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         let {width, height, sprite} = this.props;
         return (
             <View style={{width: width, height: height}}>

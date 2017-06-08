@@ -15,7 +15,8 @@ import Util from '../utility/util';
 import FrameAnimation from './FrameAnimation';
 import * as ACTIONS from '../utility/events';
 
-class LoadingActivity extends Component {
+const debugKeyWord = '[Loading]';
+export default class Loading extends Component {
     _DeviceEventEmitter = null;
     _overTimeHandle = -1;
     _overTimeCount = 30000;//30s超时
@@ -75,6 +76,7 @@ class LoadingActivity extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         return (
             <Modal
                 animationType={'none'}
@@ -124,5 +126,3 @@ const Styles = StyleSheet.create({
         color: '#B8B8B8'
     }
 });
-
-export default LoadingActivity;

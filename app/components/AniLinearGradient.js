@@ -18,6 +18,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import Chroma from 'chroma-js';
 import shallowCompare from 'react-addons-shallow-compare';
 
+import Util from '../utility/util';
+const debugKeyWord = '[AniLinearGradient]';
 export default class AniLinearGradient extends Component {
     _changeColorHandle = -1;
     _gradientTime = 20;//every 20ms to change one gradient color
@@ -96,6 +98,7 @@ export default class AniLinearGradient extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         let {startColors, endColors, colorIndex} = this.state;
         return (
             <LinearGradient

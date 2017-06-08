@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import shallowCompare from 'react-addons-shallow-compare';
 
+import Util from '../utility/util';
+const debugKeyWord = '[DirectText]';
 export default class DirectText extends Component {
     static propTypes = {
         text: PropTypes.string,
@@ -42,6 +44,7 @@ export default class DirectText extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         let {text, fontSize, color, textAlign} = this.state;
         return <Text style={{fontSize: fontSize, color: color, textAlign: textAlign}}>{text}</Text>
     }

@@ -15,6 +15,8 @@ import {
 } from 'react-native';
 import shallowCompare from 'react-addons-shallow-compare';
 
+import Util from '../utility/util';
+const debugKeyWord = '[ModalActivity]';
 export default class ModalActivity extends Component {
     _hardwareBackPressHandle = null;//物理返回键监听句柄
     _hardwareBackPress = null;//安卓物理返回键案件回调函数
@@ -131,6 +133,7 @@ export default class ModalActivity extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         let {children, wrapStyle, containerStyle} = this.props;
         return (
             <View style={[Styles.wrap, wrapStyle, {transform: [{translateY: this.state.visible ? 0 : 10000}]}]}>

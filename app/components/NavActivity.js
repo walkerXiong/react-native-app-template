@@ -16,6 +16,9 @@ import {
 } from 'react-native';
 import Dimensions from 'Dimensions';
 
+import Util from '../utility/util';
+const debugKeyWord = '[NavActivity]';
+
 let _template = {//默认模版
     width: 320,//iphone5的逻辑宽度，可由matchTemplate函数更改
     height: 568,//iphone5的逻辑高度，可由matchTemplate函数更改
@@ -192,7 +195,7 @@ class RightButton extends Component {
     }
 }
 
-class NavActivity extends Component {
+export default class NavActivity extends Component {
     static propTypes = {
         template: PropTypes.object,
         statusBar: PropTypes.object,
@@ -296,6 +299,7 @@ class NavActivity extends Component {
     }
 
     render() {
+        Util.log(debugKeyWord + 'render!!!');
         const {statusBar, bottomStyle, navHeight} = this.state;
         return (
             <View style={[Styles.wrap, {
@@ -404,5 +408,3 @@ const Styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
-
-export default NavActivity;
