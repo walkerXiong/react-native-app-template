@@ -11,8 +11,11 @@ import {
 import {observable, action, autorun, computed} from 'mobx';
 import {observer, Provider, inject} from 'mobx-react/native';
 import AppStore from '../stores/testView/test';
+import Util from '../utility/util';
+import * as ACTIONS from '../utility/events';
 
 import ModalActivity from '../components/ModalActivity';
+import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
 
 @inject('store') @observer
@@ -42,6 +45,7 @@ class ReduxTestPage extends Component {
     _nextPage() {
         // window.console.log(this.props.navigation);
         // this.props.navigation.navigate('NextPage');
+        Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: 20000});
     }
 
     render() {
@@ -74,6 +78,7 @@ class ReduxTestPage extends Component {
                     onRequestToClose={() => updateData({Success: !Success})}
                     allowHardwareBackHideModal={false}
                     tapBackToHide={true}/>
+                <Loading/>
             </View>
         )
     }
