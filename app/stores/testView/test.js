@@ -5,7 +5,8 @@ import {observable, action, computed} from 'mobx';
 
 let TestStore = observable({
     @observable data: {//服务端数据
-        Success: false
+        Success: false,
+        keyboardType: 1
     },
 
     @observable state: {//本地状态
