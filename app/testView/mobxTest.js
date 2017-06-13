@@ -3,9 +3,11 @@ import React, {Component} from 'react';
 import {
     View,
     Text,
+    TextInput,
     Image,
     StyleSheet,
     TouchableOpacity,
+    TouchableWithoutFeedback
 } from 'react-native';
 
 import {observable, action, autorun, computed} from 'mobx';
@@ -17,6 +19,7 @@ import * as ACTIONS from '../utility/events';
 import AlertSys from '../components/AlertSys';
 import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
+import NumericKeyboard from '../components/keyboard/NumericKeyboard';
 
 @inject('store') @observer
 class CountAge extends Component {
@@ -65,32 +68,42 @@ class ReduxTestPage extends Component {
         });
     }
 
+    _onKeyPress(value) {
+        if (this._myInput.isFocused()) {
+            this._myInput.setNativeProps({
+                text: value
+            });
+        }
+        else {
+            this._myInput.focus();
+            this._myInput.setNativeProps({
+                text: value
+            });
+        }
+    }
+
     render() {
         let {userName} = this.props.store.state;
-        let {Success} = this.props.store.data;
+        let {Success, keyboardType} = this.props.store.data;
         let {updateData} = this.props.store;
         return (
-            <View style={Styles.wrap}>
-                <NavActivity
-                    closeButton={{closeZone: 'right', disabled: false}}
-                    leftButton={{disabled: false}}
-                    title={{title: 'HOME'}}/>
-                <Text>{`my Name is: ${userName}`}</Text>
-                <Text>{`server data isSuccess ${Success}`}</Text>
-                <TouchableOpacity
-                    style={Styles.btn}
-                    onPress={() => updateData({Success: !Success})}>
-                    <Text>{'toggle server data true or false'}</Text>
-                </TouchableOpacity>
-                <CountAge/>
-                <TouchableOpacity
-                    style={Styles.btn}
-                    onPress={() => this._nextPage()}>
-                    <Text>{'press to jump router!!!'}</Text>
-                </TouchableOpacity>
-                <AlertSys showEvent={'MOBX_TEST_ALERT'}/>
-                <Loading/>
-            </View>
+            <TouchableWithoutFeedback onPress={() => updateData({Success: false})}>
+                <View style={Styles.wrap}>
+                    <Text>{`my Name is: ${userName}`}</Text>
+                    <Text>{`server data isSuccess ${Success}`}</Text>
+                    <TouchableOpacity
+                        style={Styles.btn}
+                        onPress={() => updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})}>
+                        <Text>{'toggle server data true or false'}</Text>
+                    </TouchableOpacity>
+                    <CountAge/>
+                    <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
+                    <NumericKeyboard
+                        onKeyPress={this._onKeyPress.bind(this)}
+                        keyboardType={keyboardType}
+                        keyboardShow={Success}/>
+                </View>
+            </TouchableWithoutFeedback>
         )
     }
 }
@@ -124,5 +137,12 @@ const Styles = StyleSheet.create({
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center'
+    },
+    commonInput: {
+        width: 200,
+        height: 50,
+        margin: 0,
+        padding: 0,
+        textAlign: 'center'
     }
 });
