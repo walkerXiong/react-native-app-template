@@ -19,7 +19,7 @@ import * as ACTIONS from '../utility/events';
 import AlertSys from '../components/AlertSys';
 import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
-import NumericKeyboard from '../components/keyboard/NumericKeyboard';
+import SecuredPayKeyboard from '../components/keyboard/SecuredPayKeyboard';
 
 @inject('store') @observer
 class CountAge extends Component {
@@ -87,7 +87,7 @@ class ReduxTestPage extends Component {
         let {Success, keyboardType} = this.props.store.data;
         let {updateData} = this.props.store;
         return (
-            <TouchableWithoutFeedback onPress={() => updateData({Success: false})}>
+            <TouchableWithoutFeedback onPress={() => null}>
                 <View style={Styles.wrap}>
                     <Text>{`my Name is: ${userName}`}</Text>
                     <Text>{`server data isSuccess ${Success}`}</Text>
@@ -98,11 +98,9 @@ class ReduxTestPage extends Component {
                     </TouchableOpacity>
                     <CountAge/>
                     <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
-                    <NumericKeyboard
-                        onRequestToClose={()=>updateData({Success: false})}
-                        onKeyPress={this._onKeyPress.bind(this)}
-                        keyboardType={keyboardType}
-                        keyboardShow={Success}/>
+                    <SecuredPayKeyboard
+                        visible={Success}
+                        onRequestToClose={()=>updateData({Success: false})}/>
                 </View>
             </TouchableWithoutFeedback>
         )
