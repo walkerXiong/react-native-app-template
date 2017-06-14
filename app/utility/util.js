@@ -8,7 +8,7 @@ import {
     PixelRatio,
     DeviceEventEmitter,
     Platform,
-    BackAndroid,
+    BackHandler,
     StatusBar
 } from 'react-native';
 import Toast from 'react-native-root-toast';
@@ -71,14 +71,13 @@ const Util = {
     physicalButton: {
         _lastBackPressed: -1,
         _allowLeaveTime: 2000,
-        _hardWareBackHandle: -1,
         addBackEventListener(eventName, navigator){
-            this._hardWareBackHandle = BackAndroid.addEventListener(eventName, () => {
+            return BackHandler.addEventListener(eventName, () => {
                 return this.onBackAndroid(navigator);
             });
         },
-        removeBackEventListener(){
-            this._hardWareBackHandle.remove();
+        removeBackEventListener(hardWareBackHandle){
+            hardWareBackHandle && hardWareBackHandle.remove();
         },
         onBackAndroid(navigator){
             if (navigator) {
