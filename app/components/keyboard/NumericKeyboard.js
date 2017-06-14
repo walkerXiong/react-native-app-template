@@ -5,21 +5,24 @@ import React, {Component, PropTypes} from 'react';
 import {
     View,
     Text,
+    BackHandler,
     StyleSheet,
     Animated,
     Easing,
     TouchableHighlight
 } from 'react-native';
-import shallowCompare from 'react-addons-shallow-compare';
 import Util from '../../utility/util';
+import * as KBEvent from './KBEvent';
 
 const debugKeyWord = '[NumericKeyboard]';
 export default class NumericKeyboard extends Component {
+    _keyboardHandle = -1;
 
     static propTypes = {
         keyboardType: PropTypes.number,
         keyboardShow: PropTypes.bool,
         onKeyPress: PropTypes.func,
+        onRequestToClose: PropTypes.func.isRequired,
     };
 
     static defaultProps = {
@@ -33,6 +36,10 @@ export default class NumericKeyboard extends Component {
             translatePosY: new Animated.Value(300),
             value: '',
         }
+    }
+
+    componentDidMount() {
+        this._keyboardHandle = BackHandler.addEventListener(KBEvent.ACTION_NUMERIC_KEYBOARD_SHOW, this._hardwareBackPress.bind(this))
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -57,6 +64,15 @@ export default class NumericKeyboard extends Component {
                 }).start();
             }
         }
+    }
+
+    _hardwareBackPress() {
+        let {keyboardShow, onRequestToClose}=this.props;
+        if (keyboardShow) {
+            onRequestToClose instanceof Function && onRequestToClose();
+            return true;
+        }
+        return false;
     }
 
     _keyboardPress(id) {

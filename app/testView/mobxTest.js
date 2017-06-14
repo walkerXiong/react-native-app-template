@@ -99,6 +99,7 @@ class ReduxTestPage extends Component {
                     <CountAge/>
                     <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
                     <NumericKeyboard
+                        onRequestToClose={()=>updateData({Success: false})}
                         onKeyPress={this._onKeyPress.bind(this)}
                         keyboardType={keyboardType}
                         keyboardShow={Success}/>
