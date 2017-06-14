@@ -18,10 +18,16 @@ import {
 import shallowCompare from 'react-addons-shallow-compare';
 
 import Util from '../../utility/util';
-const debugKeyWord = '[KBModal]';
-export default class KBModal extends Component {
+const debugKeyWord = '[SecuredPayKeyboard]';
+export default class SecuredPayKeyboard extends Component {
     _hardwareBackPressHandle = null;//物理返回键监听句柄
     _hardwareBackPress = null;//安卓物理返回键案件回调函数
+    _dot_1 = null;
+    _dot_2 = null;
+    _dot_3 = null;
+    _dot_4 = null;
+    _dot_5 = null;
+    _dot_6 = null;
 
     static defaultProps = {
         visible: false,//modal是否显示
@@ -49,6 +55,7 @@ export default class KBModal extends Component {
             shadeOpacity: new Animated.Value(props.shadeStartOpacity),
             currScale: new Animated.Value(props.initScale),
             translatePosY: new Animated.Value(300),
+            translatePosX: new Animated.Value(0),
             pwScale_1: new Animated.Value(1),
             pwScale_2: new Animated.Value(1),
             pwScale_3: new Animated.Value(1),
@@ -122,6 +129,7 @@ export default class KBModal extends Component {
             }).start(() => {
                 this.state.value = '';
                 this._pwScale(0);
+                this.state.translatePosX.setValue(0);
                 this.setState({visible: false}, () => {
                     modalDidClose instanceof Function && modalDidClose();
                 });
@@ -144,6 +152,14 @@ export default class KBModal extends Component {
         if (tapBackToHide) onRequestToClose();
     }
 
+    _verifyPassword() {
+        let {animationDuration} = this.props;
+        Animated.timing(this.state.translatePosX, {
+            toValue: -Util.size.screen.width,
+            duration: animationDuration,
+        }).start();
+    }
+
     _pwScale(id) {
         let _i = 0;
         if (id == 0) {
@@ -162,7 +178,9 @@ export default class KBModal extends Component {
                 Animated.timing(this.state['pwScale_' + id], {
                     toValue: 1,
                     duration: 100,
-                }).start();
+                }).start(() => {
+                    id == this.state.pwMaxLength ? this._verifyPassword() : null;
+                });
             });
         }
     }
@@ -224,97 +242,103 @@ export default class KBModal extends Component {
                                 style={[Styles.dot, {transform: [{scale: this.state.pwScale_6}], marginRight: 0}]}/>
                         </View>
                     </Animated.View>
-                    <Animated.View style={[Styles.keyboardWrap, {transform: [{translateY: this.state.translatePosY}]}]}>
-                        <View style={[Styles.keyboardContainer,{borderTopWidth: Util.size.screen.pixel}]}>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(1)}
-                                style={[Styles.section]}>
-                                <Text>1</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(2)}
-                                style={[Styles.section]}>
-                                <Text>2</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(3)}
-                                style={[Styles.section, {borderRightWidth: 0}]}>
-                                <Text>3</Text>
-                            </TouchableHighlight>
+                    <Animated.View
+                        style={[Styles.keyboardWrap, {transform: [{translateY: this.state.translatePosY},{translateX: this.state.translatePosX}]}]}>
+                        <View style={Styles.keyboardZone}>
+                            <View style={[Styles.keyboardContainer]}>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(1)}
+                                    style={[Styles.section]}>
+                                    <Text>1</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(2)}
+                                    style={[Styles.section]}>
+                                    <Text>2</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(3)}
+                                    style={[Styles.section, {borderRightWidth: 0}]}>
+                                    <Text>3</Text>
+                                </TouchableHighlight>
+                            </View>
+                            <View style={[Styles.keyboardContainer]}>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(4)}
+                                    style={[Styles.section]}>
+                                    <Text>4</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(5)}
+                                    style={[Styles.section]}>
+                                    <Text>5</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(6)}
+                                    style={[Styles.section, {borderRightWidth: 0}]}>
+                                    <Text>6</Text>
+                                </TouchableHighlight>
+                            </View>
+                            <View style={[Styles.keyboardContainer]}>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(7)}
+                                    style={[Styles.section]}>
+                                    <Text>7</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(8)}
+                                    style={[Styles.section]}>
+                                    <Text>8</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(9)}
+                                    style={[Styles.section, {borderRightWidth: 0}]}>
+                                    <Text>9</Text>
+                                </TouchableHighlight>
+                            </View>
+                            <View style={[Styles.keyboardContainer,{borderBottomWidth: 0}]}>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#ffffff'}
+                                    style={[Styles.section]}>
+                                    <Text>{'secure'}</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress(0)}
+                                    style={[Styles.section]}>
+                                    <Text>0</Text>
+                                </TouchableHighlight>
+                                <TouchableHighlight
+                                    activeOpacity={1}
+                                    underlayColor={'#eaeaea'}
+                                    onPress={()=>this._keyboardPress('delete')}
+                                    style={[Styles.section, {borderRightWidth: 0}]}>
+                                    <Text>delete</Text>
+                                </TouchableHighlight>
+                            </View>
                         </View>
-                        <View style={[Styles.keyboardContainer]}>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(4)}
-                                style={[Styles.section]}>
-                                <Text>4</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(5)}
-                                style={[Styles.section]}>
-                                <Text>5</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(6)}
-                                style={[Styles.section, {borderRightWidth: 0}]}>
-                                <Text>6</Text>
-                            </TouchableHighlight>
-                        </View>
-                        <View style={[Styles.keyboardContainer]}>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(7)}
-                                style={[Styles.section]}>
-                                <Text>7</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(8)}
-                                style={[Styles.section]}>
-                                <Text>8</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(9)}
-                                style={[Styles.section, {borderRightWidth: 0}]}>
-                                <Text>9</Text>
-                            </TouchableHighlight>
-                        </View>
-                        <View style={[Styles.keyboardContainer,{borderBottomWidth: 0}]}>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#ffffff'}
-                                style={[Styles.section]}>
-                                <Text>{'secure'}</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress(0)}
-                                style={[Styles.section]}>
-                                <Text>0</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight
-                                activeOpacity={1}
-                                underlayColor={'#eaeaea'}
-                                onPress={()=>this._keyboardPress('delete')}
-                                style={[Styles.section, {borderRightWidth: 0}]}>
-                                <Text>delete</Text>
-                            </TouchableHighlight>
+                        <View style={Styles.keyboardZone}>
+                            <Text>verifying...</Text>
                         </View>
                     </Animated.View>
                 </Animated.View>
@@ -323,7 +347,7 @@ export default class KBModal extends Component {
     }
 }
 
-KBModal.propTypes = {
+SecuredPayKeyboard.propTypes = {
     visible: PropTypes.bool,
     springOption: PropTypes.object,
     allowHardwareBackHideModal: PropTypes.bool,
@@ -346,12 +370,12 @@ const Styles = StyleSheet.create({
         right: 0,
         flexDirection: 'column',
         justifyContent: 'flex-end',
-        alignItems: 'center'
+        alignItems: 'flex-start'
     },
     container: {
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         backgroundColor: '#ffffff'
     },
     headerWrap: {
@@ -362,11 +386,20 @@ const Styles = StyleSheet.create({
         alignItems: 'center'
     },
     keyboardWrap: {
+        width: Util.size.screen.width * 2,
+        height: 280,
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+    },
+    keyboardZone: {
         width: Util.size.screen.width,
         height: 280,
         flexDirection: 'column',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center',
+        borderTopWidth: Util.size.screen.pixel,
+        borderColor: '#eaeaea'
     },
     keyboardContainer: {
         flex: 1,
