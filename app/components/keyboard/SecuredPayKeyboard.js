@@ -16,12 +16,59 @@ import {
     ViewPropTypes
 } from 'react-native';
 import shallowCompare from 'react-addons-shallow-compare';
+import * as Animatable from 'react-native-animatable';
+Animatable.initializeRegistryWithDefinitions({
+    SPK_translateY_in: {
+        0: {translateY: 300, translateX: 0},
+        1: {translateY: 0, translateX: 0}
+    },
+    SPK_translateY_out: {
+        0: {translateY: 0},
+        1: {translateY: 300}
+    },
+    SPK_translateXY_out: {
+        0: {translateY: 0, translateX: -Util.size.screen.width},
+        1: {translateY: 300, translateX: -Util.size.screen.width}
+    },
+    SPK_translateX_in: {
+        0: {translateX: 0},
+        1: {translateX: -Util.size.screen.width}
+    },
+    SPK_translateX_out: {
+        0: {translateX: -Util.size.screen.width},
+        1: {translateX: 0}
+    },
+    SPK_attachWrap_in: {
+        0: {opacity: 0, scale: 0.85},
+        0.3: {opacity: 0.8,},
+        1: {opacity: 1, scale: 1}
+    },
+    SPK_attachWrap_out: {
+        0: {opacity: 1, scale: 1},
+        1: {opacity: 0, scale: 0.85}
+    },
+    SPK_container_in: {
+        0: {opacity: 0.9},
+        1: {opacity: 1}
+    },
+    SPK_container_out: {
+        0: {opacity: 1},
+        1: {opacity: 0.75}
+    },
+    SPK_shadeWrap_in: {
+        0: {opacity: 0},
+        1: {opacity: 0.75}
+    },
+    SPK_shadeWrap_out: {
+        0: {opacity: 0.75},
+        1: {opacity: 0}
+    },
+});
 
 import Util from '../../utility/util';
 const debugKeyWord = '[SecuredPayKeyboard]';
-export default class SecuredPayKeyboard extends Component {
-    _hardwareBackPressHandle = null;//物理返回键监听句柄
-    _hardwareBackPress = null;//安卓物理返回键案件回调函数
+
+class KeyBoard extends Component {
     _dot_1 = null;
     _dot_2 = null;
     _dot_3 = null;
@@ -31,31 +78,16 @@ export default class SecuredPayKeyboard extends Component {
 
     static defaultProps = {
         visible: false,//modal是否显示
-        springOption: {
-            velocity: 3,
-            friction: 10
-        },//弹框摩擦选项
-        allowHardwareBackHideModal: true,//是否允许安卓返回键隐藏Modal
-        hardwareBackPress: null,//自定义响应安卓硬件返回键
-        shadeStartOpacity: 0,//背景蒙层一开始出现的透明度
-        shadeEndOpacity: 0.75,//背景蒙层的透明度
-        initScale: 0.9,//初始放大的倍数
         animationDuration: 200,//显示完整Modal的时间
-        tapBackToHide: true,//点击其他区域是否关闭弹框
-        onRequestToClose: () => null,//关闭Modal的唯一途径只有通过props.visible来关闭，此回调函数就是用于父组件更新props.visible，并且此属性isRequired
+        tapBackToHide: () => null,//点击其他区域是否关闭弹框
         modalDidClose: null,//Modal关闭时候的回调函数
     };
 
     constructor(props) {
         super(props);
         this.state = {
-            visible: props.visible,
             value: '',//键盘输入的值
             pwMaxLength: 6,//安全键盘输入密码的最长长度
-            shadeOpacity: new Animated.Value(props.shadeStartOpacity),
-            currScale: new Animated.Value(props.initScale),
-            translatePosY: new Animated.Value(300),
-            translatePosX: new Animated.Value(0),
             pwScale_1: new Animated.Value(1),
             pwScale_2: new Animated.Value(1),
             pwScale_3: new Animated.Value(1),
@@ -65,99 +97,40 @@ export default class SecuredPayKeyboard extends Component {
         };
     }
 
-    componentDidMount() {
-        let {hardwareBackPress} = this.props;
-        this._hardwareBackPress = hardwareBackPress instanceof Function ? hardwareBackPress : this.hardwareBackPress.bind(this);
-        this._hardwareBackPressHandle = BackHandler.addEventListener('hardwareBackPress', this._hardwareBackPress);
-    }
-
-    componentWillReceiveProps(nextProps, nextState) {
+    shouldComponentUpdate(nextProps, nextState) {
         if ((nextProps.visible === true || nextProps.visible === false) && nextProps.visible !== this.props.visible) {
             nextProps.visible === true ? this.modalShow() : this.modalHide();
-        }
-    }
-
-    shouldComponentUpdate(nextProps, nextState) {
-        if (nextProps.visible === false) {
-            return nextState.visible !== this.state.visible;
-        }
-        return shallowCompare(this, nextProps, nextState);
-    }
-
-    componentWillUnmount() {
-        this._hardwareBackPressHandle.remove();
-    }
-
-    modalShow() {
-        if (this.state.visible === false) {
-            this.setState({
-                visible: true
-            }, () => {
-                let {shadeEndOpacity, animationDuration, springOption} = this.props;
-                Animated.spring(this.state.currScale, {
-                    toValue: 1,
-                    duration: animationDuration,
-                    ...springOption
-                }).start();
-                Animated.timing(this.state.shadeOpacity, {
-                    toValue: shadeEndOpacity,
-                    duration: animationDuration
-                }).start();
-                Animated.timing(this.state.translatePosY, {
-                    toValue: 0,
-                    duration: animationDuration,
-                }).start();
-            });
-        }
-    }
-
-    modalHide() {
-        if (this.state.visible === true) {
-            let {animationDuration, shadeStartOpacity, initScale, modalDidClose} = this.props;
-            //Animated.parallel() callback exec will delay little time , usually is 600ms , so abort it.
-            Animated.spring(this.state.currScale, {
-                toValue: initScale,
-                duration: animationDuration,
-            }).start();
-            Animated.timing(this.state.translatePosY, {
-                toValue: 300,
-                duration: animationDuration,
-            }).start();
-            Animated.timing(this.state.shadeOpacity, {
-                toValue: shadeStartOpacity,
-                duration: animationDuration
-            }).start(() => {
-                this.state.value = '';
-                this._pwScale(0);
-                this.state.translatePosX.setValue(0);
-                this.setState({visible: false}, () => {
-                    modalDidClose instanceof Function && modalDidClose();
-                });
-            });
-        }
-    }
-
-    hardwareBackPress() {
-        if (this.state.visible) {
-            if (this.props.allowHardwareBackHideModal) {
-                this.props.onRequestToClose();
-            }
-            return true;
         }
         return false;
     }
 
-    tapBackToHide() {
-        let {tapBackToHide, onRequestToClose} = this.props;
-        if (tapBackToHide) onRequestToClose();
+    modalShow() {
+        let {visible, animationDuration} = this.props;
+        if (visible === false) {
+            this._attachWrap.SPK_attachWrap_in(animationDuration);
+            this._keyboardWrap.SPK_translateY_in(animationDuration);
+            this._shadeWrap.SPK_shadeWrap_in(animationDuration);
+        }
+    }
+
+    modalHide() {
+        let {visible, animationDuration, modalDidClose} = this.props;
+        if (visible === true) {
+            this._attachWrap.SPK_attachWrap_out(animationDuration);
+            this.state.value.length === 6 ? this._keyboardWrap.SPK_translateXY_out(animationDuration) : this._keyboardWrap.SPK_translateY_out(animationDuration);
+            this._shadeWrap.SPK_shadeWrap_out(animationDuration).then((endState) => {
+                if (endState.finished) {
+                    this._pwScale(0);
+                    this.state.value = '';
+                    modalDidClose instanceof Function && modalDidClose();
+                }
+            });
+        }
     }
 
     _verifyPassword() {
         let {animationDuration} = this.props;
-        Animated.timing(this.state.translatePosX, {
-            toValue: -Util.size.screen.width,
-            duration: animationDuration,
-        }).start();
+        this._keyboardWrap.SPK_translateX_in(animationDuration);
     }
 
     _pwScale(id) {
@@ -193,33 +166,27 @@ export default class SecuredPayKeyboard extends Component {
         else {
             this.state.value = this.state.value.substring(0, this.state.value.length - 1);
         }
-        Util.log(debugKeyWord + '_keyboardPress==value:' + this.state.value);
+        Util.log('inner keyboard _keyboardPress==value:' + this.state.value);
         this._pwScale(this.state.value.length);
     }
 
     render() {
-        Util.log(debugKeyWord + 'render!!!');
+        Util.log('inner keyboard render!!!');
         return (
-            <View style={[Styles.wrap, {transform: [{translateY: this.state.visible ? 0 : 10000}]}]}>
-                <Animated.View
-                    style={[Styles.wrap, {opacity: this.state.shadeOpacity, backgroundColor: 'rgba(0,0,0,0.9)'}]}>
-                    <TouchableOpacity activeOpacity={1} onPress={() => this.tapBackToHide()} style={Styles.wrap}/>
-                </Animated.View>
-                <Animated.View
-                    style={[Styles.container, {
-                        opacity: this.state.shadeOpacity.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.8, 1]
-                        })
-                    }]}>
-                    <Animated.View
-                        style={[Styles.headerWrap, {
-                            transform: [{scale: this.state.currScale}],
-                            opacity: this.state.shadeOpacity.interpolate({
-                                 inputRange: [0, 1],
-                                 outputRange: [0, 1]
-                            })
-                        }]}>
+            <View style={[Styles.wrap]}>
+                <Animatable.View
+                    useNativeDriver={true}
+                    ref={(ref) => this._shadeWrap = ref}
+                    style={[Styles.wrap, {backgroundColor: 'rgba(0,0,0,0.9)'}]}>
+                    <TouchableOpacity activeOpacity={1} onPress={() => this.props.tapBackToHide()} style={Styles.wrap}/>
+                </Animatable.View>
+                <View
+                    ref={(ref) => this._container = ref}
+                    style={[Styles.container]}>
+                    <Animatable.View
+                        useNativeDriver={true}
+                        ref={(ref) => this._attachWrap = ref}
+                        style={[Styles.attachWrap]}>
                         <Text style={{fontSize: 18, marginVertical: 10}}>10000</Text>
                         <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
                             <Animated.View
@@ -241,9 +208,11 @@ export default class SecuredPayKeyboard extends Component {
                                 ref={(ref) => this._dot_6 = ref}
                                 style={[Styles.dot, {transform: [{scale: this.state.pwScale_6}], marginRight: 0}]}/>
                         </View>
-                    </Animated.View>
-                    <Animated.View
-                        style={[Styles.keyboardWrap, {transform: [{translateY: this.state.translatePosY},{translateX: this.state.translatePosX}]}]}>
+                    </Animatable.View>
+                    <Animatable.View
+                        useNativeDriver={true}
+                        ref={(ref) => this._keyboardWrap = ref}
+                        style={[Styles.keyboardWrap]}>
                         <View style={Styles.keyboardZone}>
                             <View style={[Styles.keyboardContainer]}>
                                 <TouchableHighlight
@@ -340,8 +309,76 @@ export default class SecuredPayKeyboard extends Component {
                         <View style={Styles.keyboardZone}>
                             <Text>verifying...</Text>
                         </View>
-                    </Animated.View>
-                </Animated.View>
+                    </Animatable.View>
+                </View>
+            </View>
+        );
+    }
+}
+
+export default class SecuredPayKeyboard extends Component {
+    _hardwareBackPressHandle = null;//物理返回键监听句柄
+    _hardwareBackPress = null;//安卓物理返回键案件回调函数
+
+    static defaultProps = {
+        visible: false,//modal是否显示
+        allowHardwareBackHideModal: true,//是否允许安卓返回键隐藏Modal
+        hardwareBackPress: null,//自定义响应安卓硬件返回键
+        tapBackToHide: true,//点击其他区域是否关闭弹框
+        onRequestToClose: () => null,//关闭Modal的唯一途径只有通过props.visible来关闭，此回调函数就是用于父组件更新props.visible，并且此属性isRequired
+        modalDidClose: null,//Modal关闭时候的回调函数
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            show: props.visible
+        }
+    }
+
+    componentDidMount() {
+        let {hardwareBackPress} = this.props;
+        this._hardwareBackPress = hardwareBackPress instanceof Function ? hardwareBackPress : this.hardwareBackPress.bind(this);
+        this._hardwareBackPressHandle = BackHandler.addEventListener('hardwareBackPress', this._hardwareBackPress);
+    }
+
+    componentWillReceiveProps(nextProps, nextState) {
+        nextProps.visible === true && this.setState({show: true});
+    }
+
+    componentWillUnmount() {
+        this._hardwareBackPressHandle.remove();
+    }
+
+    hardwareBackPress() {
+        if (this.props.visible) {
+            if (this.props.allowHardwareBackHideModal) {
+                this.props.onRequestToClose();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    tapBackToHide() {
+        let {tapBackToHide, onRequestToClose} = this.props;
+        if (tapBackToHide) onRequestToClose();
+    }
+
+    modalDidClose() {
+        this.setState({show: false}, () => {
+            this.props.modalDidClose && this.props.modalDidClose();
+        });
+    }
+
+    render() {
+        Util.log(debugKeyWord + 'render!!!');
+        return (
+            <View style={[Styles.wrap, {transform: [{translateY: this.state.show ? 0 : 10000}]}]}>
+                <KeyBoard
+                    visible={this.props.visible}
+                    tapBackToHide={this.tapBackToHide.bind(this)}
+                    modalDidClose={this.modalDidClose.bind(this)}/>
             </View>
         );
     }
@@ -349,12 +386,8 @@ export default class SecuredPayKeyboard extends Component {
 
 SecuredPayKeyboard.propTypes = {
     visible: PropTypes.bool,
-    springOption: PropTypes.object,
     allowHardwareBackHideModal: PropTypes.bool,
     hardwareBackPress: PropTypes.func,
-    shadeStartOpacity: PropTypes.number,
-    shadeEndOpacity: PropTypes.number,
-    initScale: PropTypes.number,
     animationDuration: PropTypes.number,
     tapBackToHide: PropTypes.bool,
     onRequestToClose: PropTypes.func.isRequired,
@@ -378,12 +411,13 @@ const Styles = StyleSheet.create({
         alignItems: 'flex-start',
         backgroundColor: '#ffffff'
     },
-    headerWrap: {
+    attachWrap: {
         width: Util.size.screen.width,
         height: 100,
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'center'
+        alignItems: 'center',
+        backgroundColor: '#ffffff'
     },
     keyboardWrap: {
         width: Util.size.screen.width * 2,
@@ -391,6 +425,7 @@ const Styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-start',
         alignItems: 'center',
+        backgroundColor: '#ffffff'
     },
     keyboardZone: {
         width: Util.size.screen.width,
