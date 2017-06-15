@@ -197,6 +197,7 @@ class RightButton extends Component {
 
 export default class NavActivity extends Component {
     static propTypes = {
+        navigator: PropTypes.any,
         template: PropTypes.object,
         statusBar: PropTypes.object,
         title: PropTypes.object,
@@ -325,7 +326,7 @@ function onBackPress(navigator, handler) {
                 clearTimeout(_routerHandle);
                 _routerHandle = setTimeout(() => {
                     _routerHandle = null;//用于GC回收
-                    navigator.pop();//销毁当前路由场景，返回之前的场景，此会调用 componentWillUnmount
+                    navigator.goBack();//销毁当前路由场景，返回之前的场景，此会调用 componentWillUnmount
                 }, 100);//设置定时是为了TouchableHighlight按下效果能展示完毕
             }
         }
@@ -335,7 +336,7 @@ function onBackPress(navigator, handler) {
             clearTimeout(_routerHandle);
             _routerHandle = setTimeout(() => {
                 _routerHandle = null;//用于GC回收
-                navigator.pop();//销毁当前路由场景，返回之前的场景，此会调用 componentWillUnmount
+                navigator.goBack();//销毁当前路由场景，返回之前的场景，此会调用 componentWillUnmount
             }, 100);//设置定时是为了TouchableHighlight按下效果能展示完毕
         }
     }

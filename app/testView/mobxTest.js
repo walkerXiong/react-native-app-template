@@ -21,7 +21,7 @@ import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
 import SecuredPayKeyboard from '../components/keyboard/SecuredPayKeyboard';
 
-@inject('store') @observer
+@inject('store', 'navigation') @observer
 class CountAge extends Component {
     componentDidMount() {
         setInterval(() => {
@@ -34,6 +34,11 @@ class CountAge extends Component {
             <View style={{marginTop: 20}}>
                 <Text>{`my age: ${this.props.store.state.age}`}</Text>
                 <Text>{`my birth: ${this.props.store.fixAge}`}</Text>
+                <TouchableOpacity
+                    style={Styles.btn}
+                    onPress={() => this.props.navigation.navigate('NextPage')}>
+                    <Text>{'press to jump!!!'}</Text>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -48,7 +53,7 @@ class ReduxTestPage extends Component {
     _nextPage() {
         // window.console.log(this.props.navigation);
         // this.props.navigation.navigate('NextPage');
-        //Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: 20000});
+        // Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: 20000});
         Util.trigger('MOBX_TEST_ALERT', {
             alertShow: true,//是否显示alert
             alertTitle: '这是标题',//标题
@@ -87,30 +92,26 @@ class ReduxTestPage extends Component {
         let {Success, keyboardType} = this.props.store.data;
         let {updateData} = this.props.store;
         return (
-            <TouchableWithoutFeedback onPress={() => null}>
-                <View style={Styles.wrap}>
-                    <Text>{`my Name is: ${userName}`}</Text>
-                    <Text>{`server data isSuccess ${Success}`}</Text>
-                    <TouchableOpacity
-                        style={Styles.btn}
-                        onPress={() => updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})}>
-                        <Text>{'toggle server data true or false'}</Text>
-                    </TouchableOpacity>
-                    <CountAge/>
-                    <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
-                    <SecuredPayKeyboard
-                        visible={Success}
-                        onRequestToClose={()=>updateData({Success: false})}/>
-                </View>
-            </TouchableWithoutFeedback>
+            <View style={Styles.wrap}>
+                <NavActivity title={{title: '主页'}}/>
+                <Text>{`my Name is: ${userName}`}</Text>
+                <Text>{`server data isSuccess ${Success}`}</Text>
+                <TouchableOpacity
+                    style={Styles.btn}
+                    onPress={() => updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})}>
+                    <Text>{'toggle server data true or false'}</Text>
+                </TouchableOpacity>
+                <CountAge/>
+                <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
+                <SecuredPayKeyboard
+                    visible={Success}
+                    onRequestToClose={()=>updateData({Success: false})}/>
+            </View>
         )
     }
 }
 
 export default class ReduxTest extends Component {
-    static navigationOptions = {
-        title: 'Home',
-    };
 
     render() {
         return (
