@@ -14,6 +14,7 @@ import {observable, action, autorun, computed} from 'mobx';
 import {observer, Provider, inject} from 'mobx-react/native';
 import AppStore from '../stores/testView/test';
 import Util from '../utility/util';
+import WebAPI from '../utility/webAPI';
 import * as ACTIONS from '../utility/events';
 
 import AlertSys from '../components/AlertSys';
@@ -112,6 +113,21 @@ class ReduxTestPage extends Component {
 }
 
 export default class ReduxTest extends Component {
+
+    componentWillMount() {
+        //注册监听网络是否连接
+        WebAPI.NetInfo.isConnected.addEventListener('NetInfo_isConnected', this._registerIsConnectHandle);
+    }
+
+    componentWillUnmount() {
+        //组件销毁时候，移除网络是否连接的监听
+        WebAPI.NetInfo.isConnected.removeEventListener('NetInfo_isConnected', this._registerIsConnectHandle);
+    }
+
+    _registerIsConnectHandle = (isConnected) => {
+        //此处监听一个空执行函数，是因为iOS端需要先监听，然后isConnected.fetch()才能获取正确结果，而安卓可以直接fetch
+        !isConnected && Util.toast.show('网络断开，请检查网络');
+    };
 
     render() {
         return (
