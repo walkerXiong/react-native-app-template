@@ -8,7 +8,8 @@ import {
     Text,
     StyleSheet,
     Image,
-    Modal
+    Modal,
+    Animated
 } from 'react-native';
 
 import Util from '../utility/util';
@@ -40,23 +41,32 @@ export default class Loading extends Component {
         require('../res/test/animation_loading15.png'),
     ];
 
+    static defaultProps = {
+        fadeInTime: 200,
+        fadeOutTime: 100
+    };
+
     constructor(props) {
         super(props);
         this.state = {
             isLoadingDone: true,
+            opacity: new Animated.Value(0)
         }
     }
 
     componentDidMount() {
         this._DeviceEventEmitter = Util.addListener(ACTIONS.ACTION_LOADING_DONE, (done) => {
-            this.setState({isLoadingDone: done.done});
-            clearTimeout(this._overTimeHandle);
             if (!done.done) {
+                this.setState({isLoadingDone: done.done});
+                clearTimeout(this._overTimeHandle);
                 this._overTimeHandle = setTimeout(() => {
                     this.setState({isLoadingDone: true}, () => {
                         Util.toast.show('网络加载超时，请检查网络！');
                     });
                 }, done.overTime ? done.overTime : this._overTimeCount);
+            }
+            else {
+                this.onRequestClose();
             }
         });
     }
@@ -72,7 +82,10 @@ export default class Loading extends Component {
 
     onRequestClose() {
         clearTimeout(this._overTimeHandle);
-        this.setState({isLoadingDone: true});
+        Animated.timing(this.state.opacity, {
+            toValue: 0,
+            duration: this.props.fadeOutTime
+        }).start(() => this.setState({isLoadingDone: true}));
     }
 
     render() {
@@ -83,8 +96,8 @@ export default class Loading extends Component {
                 transparent={true}
                 visible={!this.state.isLoadingDone}
                 onRequestClose={() => this.onRequestClose()}
-                onShow={() => null}>
-                <View style={Styles.wrap}>
+                onShow={() => Animated.timing(this.state.opacity, {toValue: 1, duration: this.props.fadeInTime}).start()}>
+                <Animated.View style={[Styles.wrap, {opacity: this.state.opacity}]}>
                     <View style={Styles.loading}>
                         <FrameAnimation
                             fps={20}
@@ -93,7 +106,7 @@ export default class Loading extends Component {
                             height={56}/>
                         <Text style={Styles.font} numberOfLines={1}>{this.props.font || '加载中...'}</Text>
                     </View>
-                </View>
+                </Animated.View>
             </Modal>
         )
     }
