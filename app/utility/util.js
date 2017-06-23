@@ -71,15 +71,16 @@ const Util = {
     physicalButton: {
         _lastBackPressed: -1,
         _allowLeaveTime: 2000,
+        _navigator: null,
         addBackEventListener(eventName, navigator){
-            return BackHandler.addEventListener(eventName, () => {
-                return this.onBackAndroid(navigator);
-            });
+            Util.physicalButton._navigator = navigator;
+            return BackHandler.addEventListener(eventName, Util.physicalButton.onBackAndroid);
         },
         removeBackEventListener(hardWareBackHandle){
             hardWareBackHandle && hardWareBackHandle.remove();
         },
-        onBackAndroid(navigator){
+        onBackAndroid(){
+            let navigator = Util.physicalButton._navigator;
             if (navigator) {
                 let _routers = navigator.getCurrentRoutes();
 
