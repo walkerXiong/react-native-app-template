@@ -15,16 +15,43 @@ const _signKey = config.develop ? 'AF30FEB52DCEC4129CF778A316871BCA' : '453349E3
 const _activityDomain = config.develop ? config.activityDevDomain : config.activityFormalDomain;
 const debugKeyWord = '[webAPI]';
 
-let _loadingStartTime = 600;//500ms内网络请求无响应，则展现loading动画
-function _startLoading(overTime) {
+let _loadingStartTime = 500;//500ms内网络请求无响应，则展现loading动画
+let _overTimeCount = 30000;//API请求超时
+/**
+ *
+ * @param options //options: {'allowCancel': true, 'overTime': 30000, 'overTimeCallback': null}
+ * //allowCancel: 是否允许返回键取消loading动画
+ * //overTime: API接口超时时间，默认 30s 超时
+ * //overTimeCallback: 超时之后的回调函数
+ * @returns {[*,*]}
+ * @private
+ */
+function _startLoading(options) {
     Util.log(debugKeyWord + "loading start!!!!");
-    return setTimeout(() => {
-        Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: overTime});
+    options === undefined ? options = {} : null;
+    let _loadingHandle = setTimeout(() => {
+        Util.trigger(ACTIONS.ACTION_LOADING_DONE, {
+            done: false,
+            allowCancel: options.allowCancel
+        });
     }, _loadingStartTime);
+
+    let _overTimeHandle = setTimeout(() => {
+        Util.trigger(ACTIONS.ACTION_LOADING_DONE, {
+            done: true,
+            onClose: () => {
+                Util.toast.show('网络加载超时，请检查网络！');
+                options.overTimeCallback instanceof Function && options.overTimeCallback();
+            }
+        });
+    }, options.overTime ? options.overTime : _overTimeCount);
+
+    return [_loadingHandle, _overTimeHandle];
 }
-function _endLoading(loadingHandle) {
+function _endLoading(handles) {
     Util.log(debugKeyWord + "loading done!!!");
-    clearTimeout(loadingHandle);
+    clearTimeout(handles[0]);
+    clearTimeout(handles[1]);
     Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: true});
 }
 function _sign(obj) {//加签规则
@@ -111,12 +138,26 @@ const WebAPI = {
             }
         },
         simulateRequest: (callback) => {
-            clearTimeout(WebAPI.NetInfo.simulateRequestHandle);
-            let _responseTimeDelay = Math.ceil(Math.random() + 15) * 1000;
-            let _loadingHandle = _startLoading();
+            let _responseTimeDelay = Math.ceil(Math.random() + 5) * 1000;
+            let _loadingHandle = _startLoading({overTime: 20000, allowCancel: false});
             NetInfo.isConnected.fetch().done(
                 (isConnected) => {
-                    WebAPI.NetInfo.simulateRequestHandle = setTimeout(() => {
+                    setTimeout(() => {
+                        _endLoading(_loadingHandle);
+                        callback && callback(isConnected);
+                    }, _responseTimeDelay);
+                }
+            );
+        },
+        simulateRequestTest: (callback, overTimeCallback) => {
+            let _responseTimeDelay = Math.ceil(Math.random() + 30) * 1000;
+            let _loadingHandle = _startLoading({
+                overTime: 20000,
+                overTimeCallback: overTimeCallback
+            });
+            NetInfo.isConnected.fetch().done(
+                (isConnected) => {
+                    setTimeout(() => {
                         _endLoading(_loadingHandle);
                         callback && callback(isConnected);
                     }, _responseTimeDelay);

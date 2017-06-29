@@ -19,8 +19,8 @@ import * as ACTIONS from '../utility/events';
 const debugKeyWord = '[Loading]';
 export default class Loading extends Component {
     _DeviceEventEmitter = null;
-    _overTimeHandle = -1;
-    _overTimeCount = 30000;//30s超时
+    _loadingRequestArr = [];//记录loading请求次数的数组
+    _allowCancel = true;//是否允许返回键取消loading动画
 
     _sprite = [
         require('../res/test/animation_loading00.png'),
@@ -55,24 +55,10 @@ export default class Loading extends Component {
     }
 
     componentDidMount() {
-        this._DeviceEventEmitter = Util.addListener(ACTIONS.ACTION_LOADING_DONE, (done) => {
-            if (!done.done) {
-                this.setState({isLoadingDone: done.done});
-                clearTimeout(this._overTimeHandle);
-                this._overTimeHandle = setTimeout(() => {
-                    this.setState({isLoadingDone: true}, () => {
-                        Util.toast.show('网络加载超时，请检查网络！');
-                    });
-                }, done.overTime ? done.overTime : this._overTimeCount);
-            }
-            else {
-                this.onRequestClose();
-            }
-        });
+        this._DeviceEventEmitter = Util.addListener(ACTIONS.ACTION_LOADING_DONE, this.loadingRequest.bind(this));
     }
 
     componentWillUnmount() {
-        clearTimeout(this._overTimeHandle);
         Util.removeListener(this._DeviceEventEmitter);
     }
 
@@ -80,12 +66,34 @@ export default class Loading extends Component {
         return nextState.isLoadingDone !== this.state.isLoadingDone;
     }
 
-    onRequestClose() {
-        clearTimeout(this._overTimeHandle);
-        Animated.timing(this.state.opacity, {
-            toValue: 0,
-            duration: this.props.fadeOutTime
-        }).start(() => this.setState({isLoadingDone: true}));
+    loadingRequest(options) {
+        if (!options.done) {
+            Util.log(debugKeyWord + "loadingRequest===done: false!");
+            let _allowCancel = options.allowCancel === false || options.allowCancel === true;
+            this._loadingRequestArr.push(true);
+            _allowCancel ? this._allowCancel = options.allowCancel : null;
+            this.setState({isLoadingDone: false});
+        }
+        else {
+            Util.log(debugKeyWord + "loadingRequest===done: true!");
+            this._loadingRequestArr.pop();
+            if (this._loadingRequestArr.length <= 0) {
+                this._allowCancel = true;
+                this.onRequestClose(options.onClose);
+            }
+        }
+    }
+
+    onRequestClose(onClose) {
+        Util.log(debugKeyWord + 'onRequestClose===_allowCancel:' + this._allowCancel);
+        if (this._allowCancel) {
+            Animated.timing(this.state.opacity, {
+                toValue: 0,
+                duration: this.props.fadeOutTime
+            }).start(() => this.setState({
+                isLoadingDone: true
+            }, () => onClose instanceof Function && onClose()));
+        }
     }
 
     render() {
