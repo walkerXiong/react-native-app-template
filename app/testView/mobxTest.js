@@ -54,24 +54,25 @@ class ReduxTestPage extends Component {
     _nextPage() {
         // window.console.log(this.props.navigation);
         // this.props.navigation.navigate('NextPage');
-        // Util.trigger(ACTIONS.ACTION_LOADING_DONE, {done: false, overTime: 20000});
-        Util.trigger('MOBX_TEST_ALERT', {
-            alertShow: true,//是否显示alert
-            alertTitle: '这是标题',//标题
-            alertDetail: '没什么详情',//详情
-            alertAttach: '骑士队输球了',//附加说明
-            alertBtnNum: 1,//alert弹窗的button个数
-            alertBtnFont: ['我知道了'],//各个button的文案
-            alertBtnCallback: [() => {
-                let _random = Math.ceil(Math.random() * 10);
-                if (_random <= 3) {
-                    Util.trigger('MOBX_TEST_ALERT', {resetAlert: true});
-                }
-                else {
-                    Util.trigger('MOBX_TEST_ALERT', {alertTitle: 'change title' + _random});
-                }
-            }]
-        });
+        WebAPI.NetInfo.simulateRequest(() => null);
+        // Util.trigger('MOBX_TEST_ALERT', {
+        //     alertShow: true,//是否显示alert
+        //     alertTitle: '这是标题',//标题
+        //     alertDetail: '没什么详情',//详情
+        //     alertAttach: '骑士队输球了',//附加说明
+        //     alertBtnNum: 1,//alert弹窗的button个数
+        //     alertBtnFont: ['我知道了'],//各个button的文案
+        //     alertBtnCallback: [() => {
+        //         let _random = Math.ceil(Math.random() * 10);
+        //         if (_random <= 3) {
+        //             Util.trigger('MOBX_TEST_ALERT', {resetAlert: true});
+        //         }
+        //         else {
+        //             Util.trigger('MOBX_TEST_ALERT', {alertTitle: 'change title' + _random});
+        //         }
+        //     }]
+        // });
+        //this.props.store.updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})
     }
 
     _onKeyPress(value) {
@@ -99,14 +100,15 @@ class ReduxTestPage extends Component {
                 <Text>{`server data isSuccess ${Success}`}</Text>
                 <TouchableOpacity
                     style={Styles.btn}
-                    onPress={() => updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})}>
+                    onPress={() => this._nextPage()}>
                     <Text>{'toggle server data true or false'}</Text>
                 </TouchableOpacity>
                 <CountAge/>
                 <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
                 <SecuredPayKeyboard
                     visible={Success}
-                    onRequestToClose={()=>updateData({Success: false})}/>
+                    onRequestToClose={() => updateData({Success: false})}/>
+                <Loading/>
             </View>
         )
     }
