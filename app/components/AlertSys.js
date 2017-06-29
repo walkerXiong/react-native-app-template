@@ -6,31 +6,19 @@ import React, {Component, PropTypes} from 'react';
 import {
     View,
     Text,
-    TextInput,
     StyleSheet,
-    Image,
-    TouchableOpacity,
     TouchableHighlight
 } from 'react-native';
 import shallowCompare from 'react-addons-shallow-compare';
-
-import ModalActivity from '../components/ModalActivity';
+import Modal from '../components/ModalActivity';
 import Util from '../utility/util';
 import * as ACTIONS from '../utility/events';
 import HBStyle from '../styles/standard';
 
 const debugKeyWord = '[AlertSys]';
 
-class AlertSys extends Component {
+export default class AlertSys extends Component {
     _alertShowHandle = null;
-
-    static propTypes = {
-        showEvent: PropTypes.string.isRequired
-    };
-
-    static defaultProps = {
-        showEvent: ACTIONS.ACTION_ALERT_SHOW
-    };
 
     constructor(props) {
         super(props);
@@ -46,20 +34,7 @@ class AlertSys extends Component {
     }
 
     componentDidMount() {
-        /**
-         * 如果传递过来的参数中标明resetAlert，则执行resetAlert，
-         * 如果传递过来的参数带有回调函数callback，则不管是否带有resetAlert，都会执行回调函数
-         */
-        this._alertShowHandle = Util.addListener(this.props.showEvent, (payload) => {
-            if (payload.resetAlert && payload.resetAlert === true) {
-                this.resetAlert(payload.callback);
-            }
-            else {
-                this.setState({...payload}, () => {
-                    payload.callback instanceof Function && payload.callback();
-                });
-            }
-        });
+        this._alertShowHandle = Util.addListener(ACTIONS.ACTION_SYSALERT_SHOW, this._alertShow.bind(this));
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -70,7 +45,18 @@ class AlertSys extends Component {
         Util.removeListener(this._alertShowHandle);
     }
 
-    resetAlert(callback) {
+    _alertShow(payload) {
+        if (payload.alertShow === true) {
+            this.setState({...payload}, () => {
+                payload.onAlertShow instanceof Function && payload.onAlertShow();
+            });
+        }
+        else if (payload.alertShow === false) {
+            this.resetAlert(payload.hiddenCallback);
+        }
+    }
+
+    resetAlert(hiddenCallback) {
         this.setState({
             alertShow: false,//是否显示alert
             alertTitle: '',//标题
@@ -80,7 +66,7 @@ class AlertSys extends Component {
             alertBtnFont: [],//各个button的文案
             alertBtnCallback: [],//各个button的回调函数数组
         }, () => {
-            callback instanceof Function && callback();
+            hiddenCallback instanceof Function && hiddenCallback();
         });
     }
 
@@ -128,7 +114,11 @@ class AlertSys extends Component {
         let {alertShow, alertTitle, alertDetail, alertAttach} = this.state;
         Util.log(debugKeyWord + 'render===show:' + alertShow);
         return (
-            <ModalActivity visible={alertShow} containerStyle={Styles.wrap}>
+            <Modal
+                springOption={{velocity: 3, friction: 10}}
+                onRequestToClose={() => null}
+                visible={alertShow}
+                containerStyle={Styles.wrap}>
                 <View style={Styles.container}>
                     {alertTitle ? <Text style={Styles.title}>{alertTitle}</Text> : null}
                     <View style={[Styles.container, {marginTop: alertTitle ? 0 : 34, marginBottom: 34}]}>
@@ -137,7 +127,7 @@ class AlertSys extends Component {
                     </View>
                     {this.checkAlertBtn()}
                 </View>
-            </ModalActivity>
+            </Modal>
         )
     }
 }
@@ -212,5 +202,3 @@ const Styles = StyleSheet.create({
         color: HBStyle.color.worange
     }
 });
-
-export default AlertSys;

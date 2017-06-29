@@ -7,27 +7,21 @@ import {
     View,
     StyleSheet,
     TouchableOpacity,
-    Platform,
-    BackHandler,
-    DeviceEventEmitter,
     Animated,
-    ViewPropTypes
+    ViewPropTypes,
+    Modal
 } from 'react-native';
 import shallowCompare from 'react-addons-shallow-compare';
 
 import Util from '../utility/util';
 const debugKeyWord = '[ModalActivity]';
 export default class ModalActivity extends Component {
-    _hardwareBackPressHandle = null;//物理返回键监听句柄
-    _hardwareBackPress = null;//安卓物理返回键案件回调函数
 
     static defaultProps = {
         visible: false,//modal是否显示
         springOption: {
             velocity: 3,
         },//弹框摩擦选项
-        allowHardwareBackHideModal: false,//是否允许安卓返回键隐藏Modal
-        hardwareBackPress: null,//自定义响应安卓硬件返回键
         shadeStartOpacity: 0,//背景蒙层一开始出现的透明度
         shadeEndOpacity: 0.75,//背景蒙层的透明度
         initScale: 0.85,//初始放大的倍数
@@ -47,12 +41,6 @@ export default class ModalActivity extends Component {
             currScale: new Animated.Value(props.initScale),
             containerOpacity: new Animated.Value(1),
         };
-    }
-
-    componentDidMount() {
-        let {hardwareBackPress} = this.props;
-        this._hardwareBackPress = hardwareBackPress instanceof Function ? hardwareBackPress : this.hardwareBackPress.bind(this);
-        this._hardwareBackPressHandle = BackHandler.addEventListener('hardwareBackPress', this._hardwareBackPress);
     }
 
     componentWillReceiveProps(nextProps, nextState) {
@@ -76,22 +64,24 @@ export default class ModalActivity extends Component {
         if (this.state.visible === false) {
             this.setState({
                 visible: true
-            }, () => {
-                let {shadeEndOpacity, animationDuration, springOption} = this.props;
-                this.state.containerOpacity.setValue(1);
-                Animated.parallel([
-                    Animated.spring(this.state.currScale, {
-                        toValue: 1,
-                        duration: animationDuration,
-                        ...springOption
-                    }),
-                    Animated.timing(this.state.shadeOpacity, {
-                        toValue: shadeEndOpacity,
-                        duration: animationDuration
-                    })
-                ]).start();
             });
         }
+    }
+
+    onShow() {
+        let {shadeEndOpacity, animationDuration, springOption} = this.props;
+        this.state.containerOpacity.setValue(1);
+        Animated.parallel([
+            Animated.spring(this.state.currScale, {
+                toValue: 1,
+                duration: animationDuration,
+                ...springOption
+            }),
+            Animated.timing(this.state.shadeOpacity, {
+                toValue: shadeEndOpacity,
+                duration: animationDuration
+            })
+        ]).start();
     }
 
     modalHide() {
@@ -117,16 +107,6 @@ export default class ModalActivity extends Component {
         }
     }
 
-    hardwareBackPress() {
-        if (this.state.visible) {
-            if (this.props.allowHardwareBackHideModal) {
-                this.props.onRequestToClose();
-            }
-            return true;
-        }
-        return false;
-    }
-
     tapBackToHide() {
         let {tapBackToHide, onRequestToClose} = this.props;
         if (tapBackToHide) onRequestToClose();
@@ -134,20 +114,32 @@ export default class ModalActivity extends Component {
 
     render() {
         Util.log(debugKeyWord + 'render!!!');
-        let {children, wrapStyle, containerStyle} = this.props;
+        let {children, wrapStyle, containerStyle, onRequestToClose} = this.props;
         return (
-            <View style={[Styles.wrap, wrapStyle, {transform: [{translateY: this.state.visible ? 0 : 10000}]}]}>
-                <Animated.View
-                    style={[Styles.wrap, {opacity: this.state.shadeOpacity, backgroundColor: 'rgba(0,0,0,0.9)'}]}>
-                    <TouchableOpacity activeOpacity={1} onPress={() => this.tapBackToHide()} style={Styles.wrap}/>
-                </Animated.View>
-                <Animated.View style={[{
-                    transform: [{scale: this.state.currScale}],
-                    opacity: this.state.containerOpacity
-                }, containerStyle]}>
-                    {children}
-                </Animated.View>
-            </View>
+            <Modal
+                visible={this.state.visible}
+                onRequestClose={() => onRequestToClose()}
+                transparent={true}
+                hardwareAccelerated={true}
+                onShow={() => this.onShow()}
+                animationType={'none'}>
+                <View style={[Styles.wrap, wrapStyle]}>
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={() => this.tapBackToHide()}
+                        style={Styles.wrap}>
+                        <Animated.View
+                            style={[Styles.wrap, {backgroundColor: '#000000', opacity: this.state.shadeOpacity,}]}/>
+                    </TouchableOpacity>
+                    <Animated.View
+                        style={[containerStyle, {
+                            transform: [{scale: this.state.currScale}],
+                            opacity: this.state.containerOpacity
+                        }]}>
+                        {children}
+                    </Animated.View>
+                </View>
+            </Modal>
         );
     }
 }
@@ -155,8 +147,6 @@ export default class ModalActivity extends Component {
 ModalActivity.propTypes = {
     visible: PropTypes.bool,
     springOption: PropTypes.object,
-    allowHardwareBackHideModal: PropTypes.bool,
-    hardwareBackPress: PropTypes.func,
     shadeStartOpacity: PropTypes.number,
     shadeEndOpacity: PropTypes.number,
     initScale: PropTypes.number,
