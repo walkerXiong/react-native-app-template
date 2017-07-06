@@ -15,6 +15,7 @@ import {observable, action, autorun, computed} from 'mobx';
 import {observer, Provider, inject} from 'mobx-react/native';
 import AppStore from '../stores/testView/testPage';
 import NavActivity from '../components/NavActivity';
+import SecuredPayKeyboard from '../components/keyboard/SecuredPayKeyboard';
 
 @inject('store', 'navigation') @observer
 class RouterTestPage extends Component {
@@ -39,9 +40,13 @@ class RouterTestPage extends Component {
                     onPress={() => {
                         this.state.change = !this.state.change;
                         this.props.store.state.wifiName = this.state.change ? 'myWifi' : 'walkerXiong';
+                        this.props.store.updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)});
                     }}>
                     <Text>{'toggle wifi name'}</Text>
                 </TouchableOpacity>
+                <SecuredPayKeyboard
+                    visible={this.state.change}
+                    onRequestToClose={() => this.setState({change: false})}/>
             </View>
         )
     }

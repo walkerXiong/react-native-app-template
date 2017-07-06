@@ -1,28 +1,33 @@
 /**
  * Created by hebao on 2017/6/13.
  */
+'use strict';
 import React, {Component, PropTypes} from 'react';
 import {
     View,
     Text,
-    BackHandler,
     StyleSheet,
     Animated,
     Easing,
-    TouchableHighlight
+    TouchableHighlight,
+    TouchableOpacity,
+    Image,
+    Modal
 } from 'react-native';
 import Util from '../../utility/util';
 import * as KBEvent from './KBEvent';
+import HBStyle from '../../styles/style.android';
 
 const debugKeyWord = '[NumericKeyboard]';
 export default class NumericKeyboard extends Component {
-    _keyboardHandle = -1;
+    _keyBoardShowHandle = null;
 
     static propTypes = {
-        keyboardType: PropTypes.number,
         keyboardShow: PropTypes.bool,
+        keyboardType: PropTypes.number,
         onKeyPress: PropTypes.func,
-        onRequestToClose: PropTypes.func.isRequired,
+        onKeyboardDidShow: PropTypes.func,
+        onKeyboardDidHide: PropTypes.func,
     };
 
     static defaultProps = {
@@ -33,171 +38,209 @@ export default class NumericKeyboard extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            translatePosY: new Animated.Value(300),
-            value: '',
+            translatePosY: new Animated.Value(250),
+
+            keyboardShow: props.keyboardShow,
+            keyboardType: props.keyboardType
         }
     }
 
     componentDidMount() {
-        this._keyboardHandle = BackHandler.addEventListener(KBEvent.ACTION_NUMERIC_KEYBOARD_SHOW, this._hardwareBackPress.bind(this))
+        this._keyBoardShowHandle = Util.addListener(KBEvent.ACTION_NUMERIC_KEYBOARD_SHOW, this._keyBoardShow.bind(this));
+    }
+
+    componentWillUnmount() {
+        Util.removeListener(this._keyBoardShowHandle);
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        //return shallowCompare(this, nextProps, nextState);//因为存在回调函数必须绑定 父组件 执行环境，因此此处如果使用 shallowCompare 总是会返回true
-        return nextProps.keyboardShow !== this.props.keyboardShow || nextProps.keyboardType !== this.props.keyboardType;
+        return nextState.keyboardShow !== this.state.keyboardShow || nextState.keyboardType !== this.state.keyboardType;
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        if (prevProps.keyboardShow !== this.props.keyboardShow) {
-            if (this.props.keyboardShow === true) {
-                Animated.timing(this.state.translatePosY, {
-                    toValue: 0,
-                    duration: 200,
-                    easing: Easing.ease
-                }).start();
-            }
-            else if (this.props.keyboardShow === false) {
-                Animated.timing(this.state.translatePosY, {
-                    toValue: 300,
-                    duration: 200,
-                    easing: Easing.ease
-                }).start();
-            }
+    componentWillReceiveProps(nextProps, nextState) {
+        this._keyBoardShow(nextProps);
+    }
+
+    _keyBoardShow(payload) {
+        if (payload.keyboardShow === true) {
+            this.setState({
+                keyboardShow: payload.keyboardShow,
+                keyboardType: payload.keyboardType
+            });
+        }
+        else if (payload.keyboardShow === false) {
+            this._onRequestClose();
         }
     }
 
-    _hardwareBackPress() {
-        let {keyboardShow, onRequestToClose}=this.props;
-        if (keyboardShow) {
-            onRequestToClose instanceof Function && onRequestToClose();
-            return true;
-        }
-        return false;
+    _onRequestClose() {
+        Animated.timing(this.state.translatePosY, {
+            toValue: 250,
+            duration: 200,
+            easing: Easing.ease
+        }).start(() => {
+            this.setState({
+                keyboardShow: false
+            }, () => {
+                this.props.onKeyboardDidHide instanceof Function && this.props.onKeyboardDidHide();
+            });
+        });
+    }
+
+    _onShow() {
+        Animated.timing(this.state.translatePosY, {
+            toValue: 0,
+            duration: 200,
+            easing: Easing.ease
+        }).start(() => {
+            this.props.onKeyboardDidShow instanceof Function && this.props.onKeyboardDidShow();
+        });
     }
 
     _keyboardPress(id) {
-        if (id !== 'delete') {
-            this.state.value += id;
-        }
-        else {
-            this.state.value = this.state.value.substring(0, this.state.value.length - 1);
-        }
-        this.props.onKeyPress instanceof Function && this.props.onKeyPress(this.state.value);
+        this.props.onKeyPress instanceof Function && this.props.onKeyPress(id);
     }
 
     render() {
         Util.log(debugKeyWord + 'render!!!');
-        let {keyboardType} = this.props;
+        let {keyboardShow, keyboardType} = this.state;
         return (
-            <Animated.View style={[Styles.wrap, {transform: [{translateY: this.state.translatePosY}]}]}>
-                <View style={[Styles.container]}>
-                    <TouchableHighlight
+            <Modal
+                onRequestClose={this._onRequestClose.bind(this)}
+                onShow={this._onShow.bind(this)}
+                visible={keyboardShow}
+                transparent={true}
+                animationType={'none'}>
+                <View style={Styles.wrap}>
+                    <TouchableOpacity
                         activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(1)}
-                        style={[Styles.section]}>
-                        <Text>1</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(2)}
-                        style={[Styles.section]}>
-                        <Text>2</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(3)}
-                        style={[Styles.section, {borderRightWidth: 0}]}>
-                        <Text>3</Text>
-                    </TouchableHighlight>
+                        style={{flex: 1, width: Util.size.screen.width}}
+                        onPress={this._onRequestClose.bind(this)}/>
+                    <Animated.View style={[Styles.keyboardWrap, {transform: [{translateY: this.state.translatePosY}]}]}>
+                        <View style={[Styles.container, {
+                            borderTopWidth: Util.size.screen.pixel,
+                            borderTopColor: '#d2d2d2'
+                        }]}>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(1)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>1</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(2)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>2</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(3)}
+                                style={[Styles.section, {borderRightWidth: 0}]}>
+                                <Text style={Styles.keyFont}>3</Text>
+                            </TouchableHighlight>
+                        </View>
+                        <View style={[Styles.container]}>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(4)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>4</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(5)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>5</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(6)}
+                                style={[Styles.section, {borderRightWidth: 0}]}>
+                                <Text style={Styles.keyFont}>6</Text>
+                            </TouchableHighlight>
+                        </View>
+                        <View style={[Styles.container]}>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(7)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>7</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(8)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>8</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(9)}
+                                style={[Styles.section, {borderRightWidth: 0}]}>
+                                <Text style={Styles.keyFont}>9</Text>
+                            </TouchableHighlight>
+                        </View>
+                        <View style={[Styles.container, {borderBottomWidth: 0}]}>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={keyboardType !== 3 ? HBStyle.color.common_gray_fa : HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(keyboardType == 1 ? 'X' : keyboardType == 2 ? '.' : 'secure')}
+                                style={[Styles.section, {backgroundColor: HBStyle.color.common_gray_bg}]}>
+                                <Text
+                                    style={[Styles.keyFont, {fontSize: keyboardType == 3 ? 11 : 28}]}>{keyboardType == 1 ? 'X' : keyboardType == 2 ? '.' : '荷包安全键盘'}</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_bg}
+                                onPress={() => this._keyboardPress(0)}
+                                style={[Styles.section]}>
+                                <Text style={Styles.keyFont}>0</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                activeOpacity={1}
+                                underlayColor={HBStyle.color.common_gray_fa}
+                                onPress={() => this._keyboardPress('del')}
+                                style={[Styles.section, {
+                                    borderRightWidth: 0,
+                                    backgroundColor: HBStyle.color.common_gray_bg
+                                }]}>
+                                <Image
+                                    fadeDuration={0}
+                                    source={{uri: 'keyboard_img_pay_delicon'}}
+                                    style={Styles.keyDelete}
+                                    resizeMode={'contain'}/>
+                            </TouchableHighlight>
+                        </View>
+                    </Animated.View>
                 </View>
-                <View style={[Styles.container]}>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(4)}
-                        style={[Styles.section]}>
-                        <Text>4</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(5)}
-                        style={[Styles.section]}>
-                        <Text>5</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(6)}
-                        style={[Styles.section, {borderRightWidth: 0}]}>
-                        <Text>6</Text>
-                    </TouchableHighlight>
-                </View>
-                <View style={[Styles.container]}>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(7)}
-                        style={[Styles.section]}>
-                        <Text>7</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(8)}
-                        style={[Styles.section]}>
-                        <Text>8</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(9)}
-                        style={[Styles.section, {borderRightWidth: 0}]}>
-                        <Text>9</Text>
-                    </TouchableHighlight>
-                </View>
-                <View style={[Styles.container,{borderBottomWidth: 0}]}>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={keyboardType !== 3 ? '#eaeaea' : '#ffffff'}
-                        onPress={()=>this._keyboardPress(keyboardType == 1 ? 'X' : keyboardType == 2 ? '.' : '')}
-                        style={[Styles.section]}>
-                        <Text>{keyboardType == 1 ? 'X' : keyboardType == 2 ? '.' : 'secure'}</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress(0)}
-                        style={[Styles.section]}>
-                        <Text>0</Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                        activeOpacity={1}
-                        underlayColor={'#eaeaea'}
-                        onPress={()=>this._keyboardPress('delete')}
-                        style={[Styles.section, {borderRightWidth: 0}]}>
-                        <Text>delete</Text>
-                    </TouchableHighlight>
-                </View>
-            </Animated.View>
+            </Modal>
         );
     }
 }
 
 const Styles = StyleSheet.create({
     wrap: {
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+    },
+    keyboardWrap: {
         width: Util.size.screen.width,
-        height: 280,
+        height: 240,
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        position: 'absolute',
-        left: 0,
-        bottom: 0,
-        backgroundColor: '#ffffff'
+        backgroundColor: HBStyle.color.common_gray_fa
     },
     container: {
         flex: 1,
@@ -205,15 +248,23 @@ const Styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         borderBottomWidth: Util.size.screen.pixel,
-        borderBottomColor: '#eaeaea'
+        borderBottomColor: '#d2d2d2'
     },
     section: {
         flex: 1,
-        height: 70,
+        height: 60,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         borderRightWidth: Util.size.screen.pixel,
-        borderRightColor: '#eaeaea'
+        borderRightColor: '#d2d2d2'
+    },
+    keyFont: {
+        color: '#555555',
+        fontSize: 28
+    },
+    keyDelete: {
+        width: 37.5,
+        height: 37.5
     }
 });
