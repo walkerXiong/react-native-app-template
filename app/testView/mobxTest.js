@@ -53,7 +53,7 @@ class ReduxTestPage extends Component {
 
     _nextPage() {
         // window.console.log(this.props.navigation);
-        // this.props.navigation.navigate('NextPage');
+        this.props.navigation.navigate('NextPage');
         //WebAPI.NetInfo.simulateRequest(() => null);
         // Util.trigger('MOBX_TEST_ALERT', {
         //     alertShow: true,//是否显示alert
@@ -72,7 +72,7 @@ class ReduxTestPage extends Component {
         //         }
         //     }]
         // });
-        this.props.store.updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})
+        //this.props.store.updateData({Success: true, keyboardType: Math.ceil(Math.random() * 3)})
     }
 
     _onKeyPress(value) {

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 const ColorPropType = require('ColorPropType');
 import shallowCompare from 'react-addons-shallow-compare';
-import HBStyle from '../../styles/style.android';
+import HBStyle from '../../styles/standard';
 
 export default class TestPage extends Component {
     _indicator = null;

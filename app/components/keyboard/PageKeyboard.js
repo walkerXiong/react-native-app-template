@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import Util from '../../utility/util';
 import * as KBEvent from './KBEvent';
-import HBStyle from '../../styles/style.android';
+import HBStyle from '../../styles/standard';
 
 const debugKeyWord = '[PageKeyboard]';
 export default class PageKeyboard extends Component {

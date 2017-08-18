@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import Util from '../../utility/util';
 import * as KBEvent from './KBEvent';
-import HBStyle from '../../styles/style.android';
+import HBStyle from '../../styles/standard';
 
 const debugKeyWord = '[NumericKeyboard]';
 export default class NumericKeyboard extends Component {
