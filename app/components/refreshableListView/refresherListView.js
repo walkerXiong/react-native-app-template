@@ -24,11 +24,11 @@ export default class RefresherListView extends Component {
         this._panResponder = PanResponder.create({
             onShouldBlockNativeResponder: () => false,//是否应该阻止原生触摸事件响应
 
+            onStartShouldSetPanResponderCapture: this.onStartShouldSetPanResponderCapture,//所以如果一个父视图要防止子视图在触摸开始时成为响应器，它应该有一个 onStartShouldSetResponderCapture 处理程序，返回 true
             onStartShouldSetPanResponder: this.onStartShouldSetPanResponder,//这个视图是否在触摸开始时想成为响应器
-            onStartShouldSetPanResponderCapture: () => false,//所以如果一个父视图要防止子视图在触摸开始时成为响应器，它应该有一个 onStartShouldSetResponderCapture 处理程序，返回 true
 
+            onMoveShouldSetPanResponderCapture: this.onMoveShouldSetPanResponderCapture,
             onMoveShouldSetPanResponder: this.onMoveShouldSetPanResponder,//当视图不是响应器时，该指令被在视图上移动的触摸调用：这个视图想“声明”触摸响应吗?
-            onMoveShouldSetPanResponderCapture: () => false,
 
             onPanResponderTerminationRequest: () => true,//其他的东西想成为响应器。这种视图应该释放应答吗？返回 true 就是允许释放
             onPanResponderTerminate: () => null,//响应器已经从该视图抽离了。可能在调用onResponderTerminationRequest 之后被其他视图获取，也可能是被操作系统在没有请求的情况下获取了(发生在 iOS 的 control center/notification center)
@@ -45,11 +45,20 @@ export default class RefresherListView extends Component {
     }
 
     //========================API 调用顺序 part 1========================
+    onStartShouldSetPanResponderCapture = () => {
+        window.console.log('debug keyword: onStartShouldSetPanResponderCapture === call order 1.');//首先调用此方法
+        return false;
+    };
     onStartShouldSetPanResponder = () => {
-        window.console.log('debug keyword: onStartShouldSetPanResponder === call order 1.');//首先调用此方法
+        window.console.log('debug keyword: onStartShouldSetPanResponder === call order 1.');//如果 onStartShouldSetPanResponderCapture 返回 true 则此方法不会被调用
         return true;
     };
-    onMoveShouldSetPanResponder = (evt, gestureState) => {//如果 onStartShouldSetPanResponder 返回 true 则此方法不会被调用
+
+    onMoveShouldSetPanResponderCapture = (evt, gestureState) => {//如果 onStartShouldSetPanResponderCapture 或者 onStartShouldSetPanResponder 返回 true 则此方法不会被调用
+        window.console.log('debug keyword: onMoveShouldSetPanResponderCapture === call order 2.');
+        return false;
+    };
+    onMoveShouldSetPanResponder = (evt, gestureState) => {//如果 onMoveShouldSetPanResponderCapture 或者 onStartShouldSetPanResponder 返回 true 则此方法不会被调用
         window.console.log('debug keyword: onMoveShouldSetPanResponder === call order 2.');
         return true;
     };
