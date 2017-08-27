@@ -136,6 +136,7 @@ class FooterInfinite extends Component {
 
 export default class RefresherListView extends Component {
     _panResponder = null;//触摸响应句柄
+    _listView = null;// ListView 实例
     _headerRefresh = null;//顶部刷新组件实例
     _footerInfinite = null;//上拉加载更多组件实例
 
@@ -178,6 +179,7 @@ export default class RefresherListView extends Component {
             toValue: 0,
             duration: 100
         }).start(() => {
+            this._listView.scrollTo({x: 0, y: this.state.l_contentOffset_y + G_PULL_UP_DISTANCE, animated: false});
             if (this.state.gestureStatus !== G_STATUS_NONE) {
                 this.state.gestureStatus = G_STATUS_NONE;
                 this._footerInfinite._setGestureStatus(this.state.gestureStatus);
@@ -333,6 +335,7 @@ export default class RefresherListView extends Component {
                 <Animated.View
                     style={[Styles.wrap, {transform: [{translateY: this.state.p_translateY}]}]} {...this._panResponder.panHandlers}>
                     <ListView
+                        ref={(ref) => this._listView = ref}
                         style={{flex: 1}}
                         {...this.props}
                         onLayout={this.onLayout}
