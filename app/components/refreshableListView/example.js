@@ -145,7 +145,7 @@ export default class Example extends Component {
                     dataSource={this.state.dataSource}
                     renderRow={this.renderRow}
                     enableHeaderRefresh={true}
-                    enableFooterInfinite={true}
+                    enableFooterInfinite={false}
                     renderHeaderRefresh={this.renderHeaderRefresh}
                     renderFooterInfinite={this.renderFooterInfinite}/>
             </View>

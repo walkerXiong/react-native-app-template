@@ -196,12 +196,17 @@ export default class RefresherListView extends Component {
             l_layout_height: 0,// ListView 的组件高度 避免精度问题，内容高度使用floor
             l_contentHeight: 0,// ListView 的内容高度 避免精度问题，内容高度使用floor
             l_contentOffset_y: 0,// ListView 的滚动高度 避免精度问题，滚动高度使用ceil
-            l_onTopReached: false,// ListView 滚动到顶部
-            l_onEndReached: false,// ListView 滚动到底部
+
+            l_onTopReached_down: false,// 滚动到顶部向下拉
+            l_onTopReached_up: false,// 滚动到顶部向上拉
+
+            l_onEndReached_up: false,// 滚动到底部向上拉
+            l_onEndReached_down: false,// 滚动到底部向下拉
 
             //以下为 PullUpDown 所需参数
             p_translateY: new Animated.Value(0),// ListView 上拉时候的位移距离，用于展现刷新指示组件
             p_currPullDistance: 0,// ListView 当前上拉或下拉的距离
+            p_lastPullDistance: 0,// 备份p_currPullDistance
         };
         RefresherListView.headerRefreshDone = this._headerRefreshDone;
         RefresherListView.footerInfiniteDone = this._footerInfiniteDone;
@@ -217,60 +222,112 @@ export default class RefresherListView extends Component {
     }
 
     onMoveShouldSetPanResponderCapture = (evt, gestureState) => {
-        let {l_layout_height, l_contentHeight, l_contentOffset_y} = this.state;
+        this.state.p_lastPullDistance = this.state.p_currPullDistance;
+        this.state.l_onTopReached_down = this.state.l_onTopReached_up = this.state.l_onEndReached_up = this.state.l_onEndReached_down = false;
+
+        let {l_layout_height, l_contentHeight, l_contentOffset_y, gestureStatus} = this.state;
+        let _pullDown = gestureState.dy > 0 && gestureState.vy > 0;
+        let _pullUp = gestureState.dy < 0 && gestureState.vy < 0;
 
         if (l_contentHeight <= l_layout_height) {
-            this.state.l_onTopReached = gestureState.dy > 0 && gestureState.vy > 0;
-            this.state.l_onEndReached = gestureState.dy < 0 && gestureState.vy < 0;
+            //到顶部以及底部
+            if (_pullDown) {//下拉
+                this.state.l_onTopReached_down = this.state.p_currPullDistance === 0 && gestureStatus !== G_STATUS_FOOTER_REFRESHING;
+                this.state.l_onEndReached_down = this.state.p_currPullDistance !== 0 && gestureStatus !== G_STATUS_HEADER_REFRESHING;
+            }
+            else if (_pullUp) {//上拉
+                this.state.l_onTopReached_up = this.state.p_currPullDistance !== 0 && gestureStatus !== G_STATUS_FOOTER_REFRESHING;
+                this.state.l_onEndReached_up = this.state.p_currPullDistance === 0 && gestureStatus !== G_STATUS_HEADER_REFRESHING;
+            }
         }
         else {
-            this.state.l_onTopReached = l_contentOffset_y <= 0 && gestureState.dy > 0 && gestureState.vy > 0;
-            this.state.l_onEndReached = l_contentOffset_y >= l_contentHeight - l_layout_height && gestureState.dy < 0 && gestureState.vy < 0;
+            //到顶部
+            if (l_contentOffset_y <= 0) {
+                if (_pullDown) {//下拉
+                    this.state.l_onTopReached_down = this.state.p_currPullDistance === 0 && gestureStatus !== G_STATUS_FOOTER_REFRESHING;
+                }
+                else if (_pullUp) {//上拉
+                    this.state.l_onTopReached_up = this.state.p_currPullDistance !== 0 && gestureStatus !== G_STATUS_FOOTER_REFRESHING;
+                }
+            }
+            //到底部
+            else if (l_contentOffset_y >= l_contentHeight - l_layout_height) {
+                if (_pullDown) {//下拉
+                    this.state.l_onEndReached_down = this.state.p_currPullDistance !== 0 && gestureStatus !== G_STATUS_HEADER_REFRESHING;
+                }
+                else if (_pullUp) {//上拉
+                    this.state.l_onEndReached_up = this.state.p_currPullDistance === 0 && gestureStatus !== G_STATUS_HEADER_REFRESHING;
+                }
+            }
         }
 
-        return (this.state.l_onTopReached && this.props.enableHeaderRefresh) || (this.state.l_onEndReached && this.props.enableFooterInfinite);
+        return (this.props.enableHeaderRefresh && (this.state.l_onTopReached_down || this.state.l_onTopReached_up)) || (this.props.enableFooterInfinite && (this.state.l_onEndReached_up || this.state.l_onEndReached_down));
     };
     handlePanResponderMove = (evt, gestureState) => {
         let _translateY = Math.ceil(Math.abs(gestureState.dy));
         //下拉刷新
-        if (this.state.l_onTopReached && gestureState.dy > 0) {
-            this.state.p_translateY.setValue(_translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY);
-            this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY;
-
-            if (this.state.p_currPullDistance >= G_PULL_DOWN_DISTANCE - G_PILL_DOWN_FIX_DISTANCE) {
-                if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
-                    this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH;
-                    this._headerRefresh._setGestureStatus(this.state.gestureStatus);
-                }
+        if (this.state.l_onTopReached_down && gestureState.dy > 0) {
+            if (this.state.gestureStatus === G_STATUS_HEADER_REFRESHING) {
+                this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY;
+                this.state.p_translateY.setValue(this.state.p_currPullDistance);
             }
             else {
-                if (this.state.gestureStatus !== G_STATUS_PULLING_DOWN) {
-                    this.state.gestureStatus = G_STATUS_PULLING_DOWN;
-                    this._headerRefresh._setGestureStatus(this.state.gestureStatus);
+                this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY;
+                this.state.p_translateY.setValue(this.state.p_currPullDistance);
+
+                if (this.state.p_currPullDistance >= G_PULL_DOWN_DISTANCE - G_PILL_DOWN_FIX_DISTANCE) {
+                    if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
+                        this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH;
+                        this._headerRefresh._setGestureStatus(this.state.gestureStatus);
+                    }
+                }
+                else {
+                    if (this.state.gestureStatus !== G_STATUS_PULLING_DOWN) {
+                        this.state.gestureStatus = G_STATUS_PULLING_DOWN;
+                        this._headerRefresh._setGestureStatus(this.state.gestureStatus);
+                    }
                 }
             }
         }
+        //上拉隐藏刷新面板
+        else if (this.state.l_onTopReached_up && gestureState.dy < 0) {
+            this.state.p_currPullDistance = this.state.p_lastPullDistance + gestureState.dy;
+            this.state.p_currPullDistance < 0 ? this.state.p_currPullDistance = 0 : null;
+            this.state.p_translateY.setValue(this.state.p_currPullDistance);
+        }
         //上拉加载更多
-        else if (this.state.l_onEndReached && gestureState.dy < 0) {
-            this.state.p_translateY.setValue(_translateY >= G_PULL_UP_DISTANCE ? -G_PULL_UP_DISTANCE : -_translateY);
-            this.state.p_currPullDistance = _translateY >= G_PULL_UP_DISTANCE ? G_PULL_UP_DISTANCE : _translateY;
-            if (this.state.p_currPullDistance >= G_PULL_UP_DISTANCE - G_PILL_UP_FIX_DISTANCE) {
-                if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
-                    this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH;
-                    this._footerInfinite._setGestureStatus(this.state.gestureStatus);
-                }
+        else if (this.state.l_onEndReached_up && gestureState.dy < 0) {
+            if (this.state.gestureStatus === G_STATUS_FOOTER_REFRESHING) {
+                this.state.p_translateY.setValue(_translateY >= G_PULL_UP_DISTANCE ? -G_PULL_UP_DISTANCE : -_translateY);
+                this.state.p_currPullDistance = _translateY >= G_PULL_UP_DISTANCE ? G_PULL_UP_DISTANCE : _translateY;
             }
             else {
-                if (this.state.gestureStatus !== G_STATUS_PULLING_UP) {
-                    this.state.gestureStatus = G_STATUS_PULLING_UP;
-                    this._footerInfinite._setGestureStatus(this.state.gestureStatus);
+                this.state.p_translateY.setValue(_translateY >= G_PULL_UP_DISTANCE ? -G_PULL_UP_DISTANCE : -_translateY);
+                this.state.p_currPullDistance = _translateY >= G_PULL_UP_DISTANCE ? G_PULL_UP_DISTANCE : _translateY;
+                if (this.state.p_currPullDistance >= G_PULL_UP_DISTANCE - G_PILL_UP_FIX_DISTANCE) {
+                    if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
+                        this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH;
+                        this._footerInfinite._setGestureStatus(this.state.gestureStatus);
+                    }
+                }
+                else {
+                    if (this.state.gestureStatus !== G_STATUS_PULLING_UP) {
+                        this.state.gestureStatus = G_STATUS_PULLING_UP;
+                        this._footerInfinite._setGestureStatus(this.state.gestureStatus);
+                    }
                 }
             }
+        }
+        //下拉隐藏加载更多面板
+        else if (this.state.l_onEndReached_down && gestureState.dy > 0) {
+            this.state.p_currPullDistance = this.state.p_lastPullDistance - gestureState.dy;
+            this.state.p_currPullDistance < 0 ? this.state.p_currPullDistance = 0 : null;
+            this.state.p_translateY.setValue(-this.state.p_currPullDistance);
         }
     };
     onPanResponderEnd = () => {
         //下拉刷新
-        if (this.state.l_onTopReached) {
+        if (this.state.l_onTopReached_down || this.state.l_onTopReached_up) {
             if (this.state.p_currPullDistance < G_PULL_DOWN_DISTANCE - G_PILL_DOWN_FIX_DISTANCE) {
                 this.state.p_currPullDistance = 0;
                 Animated.timing(this.state.p_translateY, {
@@ -286,7 +343,7 @@ export default class RefresherListView extends Component {
             }
         }
         //上拉加载更多
-        else if (this.state.l_onEndReached) {
+        else if (this.state.l_onEndReached_up || this.state.l_onEndReached_down) {
             if (this.state.p_currPullDistance < G_PULL_UP_DISTANCE - G_PILL_UP_FIX_DISTANCE) {
                 this.state.p_currPullDistance = 0;
                 Animated.timing(this.state.p_translateY, {
