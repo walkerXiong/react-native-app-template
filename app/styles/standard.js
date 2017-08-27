@@ -23,7 +23,16 @@ const StandardStyle = {
         btnr_p: '#ff533c',
         btn_d: '#ffc8bd',
 
-        gray_press: '#f2f2f2'
+        gray_press: '#f2f2f2',
+        common_gray_press: '#eaeaea',
+        common_green_status: '#6975ea',
+        common_green_item_bg: '#44b5ea',
+        common_gray_line: '#eaeaea',
+
+        text_black_w: '#000000',
+        text_gray_w_main: '#dfdfdf',
+        text_red_w: '#ff00ff',
+        text_white_w: '#ffffff',
     },
     gap: {
         gap_edge: 14,
