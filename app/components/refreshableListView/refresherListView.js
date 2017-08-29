@@ -10,10 +10,12 @@ import {
     ListView,
     Dimensions,
     Animated,
-    Text
+    Text,
+    PixelRatio
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const DEVICE_PIXEL_RATIO = PixelRatio.get();
 
 const
     G_STATUS_NONE = 0,// 正常手势，没有上拉或者下拉刷新
@@ -221,7 +223,8 @@ export default class RefresherListView extends Component {
                 duration: 100
             }),
         ]).start(() => {
-            this._listView.scrollTo({x: 0, y: this.state.l_contentOffset_y + G_PULL_UP_DISTANCE, animated: false});
+            let l_contentOffset_y = this._listView.scrollProperties.offset;
+            this._listView.scrollTo({x: 0, y: l_contentOffset_y + G_PULL_UP_DISTANCE, animated: false});
             if (this.state.gestureStatus !== G_STATUS_NONE) {
                 this.state.gestureStatus = G_STATUS_NONE;
                 this._footerInfinite._setGestureStatus(this.state.gestureStatus);
@@ -241,7 +244,6 @@ export default class RefresherListView extends Component {
             //以下为处理 ListView 所需参数
             l_layout_height: 0,// ListView 的组件高度 避免精度问题，内容高度使用ceil，确保上拉到底能正确计算
             l_contentHeight: 0,// ListView 的内容高度 避免精度问题，内容高度使用floor
-            l_contentOffset_y: 0,// ListView 的滚动高度 避免精度问题，滚动高度使用ceil
 
             l_onTopReached_down: false,// 滚动到顶部向下拉
             l_onTopReached_up: false,// 滚动到顶部向上拉
@@ -271,7 +273,7 @@ export default class RefresherListView extends Component {
         this.state.p_lastPullDistance = this.state.p_currPullDistance;
         this.state.l_onTopReached_down = this.state.l_onTopReached_up = this.state.l_onEndReached_up = this.state.l_onEndReached_down = false;
 
-        let {l_layout_height, l_contentHeight, l_contentOffset_y, gestureStatus} = this.state;
+        let {l_layout_height, l_contentHeight, gestureStatus} = this.state;
         let _pullDown = gestureState.dy > 0 && gestureState.vy > 0;
         let _pullUp = gestureState.dy < 0 && gestureState.vy < 0;
 
@@ -287,8 +289,9 @@ export default class RefresherListView extends Component {
             }
         }
         else {
+            let l_contentOffset_y = this._listView.scrollProperties.offset;
             //到顶部
-            if (l_contentOffset_y <= 0) {
+            if (l_contentOffset_y <= 1 / DEVICE_PIXEL_RATIO) {
                 if (_pullDown) {//下拉
                     this.state.l_onTopReached_down = this.state.p_currPullDistance === 0 && gestureStatus !== G_STATUS_FOOTER_REFRESHING;
                 }
@@ -441,12 +444,6 @@ export default class RefresherListView extends Component {
         this.state.l_contentHeight = Math.floor(contentHeight);
         onContentSizeChange && onContentSizeChange instanceof Function ? onContentSizeChange(contentWidth, contentHeight) : null;
     };
-    //主要获取 ListView 内容的滚动高度
-    onScroll = (evt) => {
-        let {onScroll} = this.props;
-        this.state.l_contentOffset_y = Math.ceil(evt.nativeEvent.contentOffset.y);
-        onScroll && onScroll instanceof Function ? onScroll(evt) : null;
-    };
 
     render() {
         return (
@@ -460,8 +457,7 @@ export default class RefresherListView extends Component {
                         style={{flex: 1}}
                         {...this.props}
                         onLayout={this.onLayout}
-                        onContentSizeChange={this.onContentSizeChange}
-                        onScroll={this.onScroll}/>
+                        onContentSizeChange={this.onContentSizeChange}/>
                 </Animated.View>
             </View>
         );

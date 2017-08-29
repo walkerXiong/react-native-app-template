@@ -15,7 +15,7 @@ import RefresherListView from './refresherListView';
 const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
 
 export default class Example extends Component {
-    data = ['row1', 'row2', 'row3'];
+    data = ['row1', 'row2', 'row3', 'row1', 'row2', 'row3', 'row1', 'row2', 'row3', 'row1', 'row2', 'row3'];
 
     constructor(props) {
         super(props);
@@ -28,7 +28,7 @@ export default class Example extends Component {
         let total = 5;
         if (init) {
             this.data = [];
-            total = Math.ceil(Math.random() * 5);
+            total = Math.ceil(Math.random() * 10);
         }
         for (let i = 0; i < total; i++) {
             this.data.push('row' + Math.ceil(Math.random() * 5));
@@ -146,11 +146,11 @@ export default class Example extends Component {
                     renderRow={this.renderRow}
                     enableHeaderRefresh={true}
                     setHeaderHeight={80}
-                    setHeaderGapToRefresh={40}
-                    enableFooterInfinite={false}
+                    setHeaderGapToRefresh={8}
                     renderHeaderRefresh={this.renderHeaderRefresh}
+                    enableFooterInfinite={true}
                     setFooterHeight={60}
-                    setfootergaptoinfinite={30}
+                    setfootergaptoinfinite={8}
                     renderFooterInfinite={this.renderFooterInfinite}/>
             </View>
         );
