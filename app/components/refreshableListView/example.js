@@ -10,7 +10,7 @@ import {
     ListView,
     Dimensions,
 }  from 'react-native';
-import RefresherListView from './refresher';
+import RefresherListView from './refresherListView';
 
 const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
 
@@ -145,8 +145,12 @@ export default class Example extends Component {
                     dataSource={this.state.dataSource}
                     renderRow={this.renderRow}
                     enableHeaderRefresh={true}
+                    setHeaderHeight={80}
+                    setHeaderGapToRefresh={40}
                     enableFooterInfinite={false}
                     renderHeaderRefresh={this.renderHeaderRefresh}
+                    setFooterHeight={60}
+                    setfootergaptoinfinite={30}
                     renderFooterInfinite={this.renderFooterInfinite}/>
             </View>
         );
