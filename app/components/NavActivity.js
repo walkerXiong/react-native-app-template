@@ -271,8 +271,8 @@ export default class NavActivity extends Component {
                 apartLinesColor: '#eaeaea',//导航栏下边分割线的颜色
                 ...props.bottomStyle
             },
-            navHeight: _template.navHeight,//导航栏的高度
-            paddingSize: _template.paddingSize,//导航栏的左右补白
+            navHeight: props.navHeight ? props.navHeight : _template.navHeight,//导航栏的高度
+            paddingSize: props.paddingSize ? props.paddingSize : _template.paddingSize,//导航栏的左右补白
         };
         if (!this.state.template.disableScale) {
             matchTemplate(this.state.template.phone, this.state.template.height);
