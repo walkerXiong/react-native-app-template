@@ -32,7 +32,7 @@ let
     G_PILL_DOWN_FIX_DISTANCE = 20;//下拉刷新可下拉距离小于 20 时触发下拉刷新
 
 
-let _renderHeaderRefresh = (gestureStatus) => {
+const _renderHeaderRefresh = (gestureStatus) => {
     switch (gestureStatus) {
         case G_STATUS_PULLING_DOWN:
             return <Text>{'下拉刷新'}</Text>;
@@ -94,7 +94,7 @@ class HeaderRefresh extends Component {
     }
 }
 
-let _renderFooterInfinite = (gestureStatus) => {
+const _renderFooterInfinite = (gestureStatus) => {
     switch (gestureStatus) {
         case G_STATUS_PULLING_UP:
             return <Text>{'上拉即可加载更多...'}</Text>;
@@ -190,7 +190,9 @@ export default class RefresherListView extends Component {
     static headerRefreshDone = () => null;
     static footerInfiniteDone = () => null;
 
-    _headerRefreshDone = () => {
+    _headerRefreshDoneAni = (callback) => {
+        if (this.state.p_translating) return;
+        this.state.p_translating = true;
         this.state.p_currPullDistance = 0;
         let _headerAniTranslateY = this._headerRefresh._getAniTranslateY();
         Animated.parallel([
@@ -203,6 +205,13 @@ export default class RefresherListView extends Component {
                 duration: 100
             }),
         ]).start(() => {
+            this.state.p_translating = false;
+            callback instanceof Function && callback();
+        });
+    };
+
+    _headerRefreshDone = () => {
+        this._headerRefreshDoneAni(() => {
             if (this.state.gestureStatus !== G_STATUS_NONE) {
                 this.state.gestureStatus = G_STATUS_NONE;
                 this._headerRefresh._setGestureStatus(this.state.gestureStatus);
@@ -210,7 +219,9 @@ export default class RefresherListView extends Component {
         });
     };
 
-    _footerInfiniteDone = () => {
+    _footerInfiniteDoneAni = (callback) => {
+        if (this.state.p_translating) return;
+        this.state.p_translating = true;
         this.state.p_currPullDistance = 0;
         let _footerAniTranslateY = this._footerInfinite._getAniTranslateY();
         Animated.parallel([
@@ -223,6 +234,13 @@ export default class RefresherListView extends Component {
                 duration: 100
             }),
         ]).start(() => {
+            this.state.p_translating = false;
+            callback instanceof Function && callback();
+        });
+    };
+
+    _footerInfiniteDone = () => {
+        this._footerInfiniteDoneAni(() => {
             let l_contentOffset_y = this._listView.scrollProperties.offset;
             this._listView.scrollTo({x: 0, y: l_contentOffset_y + G_PULL_UP_DISTANCE, animated: false});
             if (this.state.gestureStatus !== G_STATUS_NONE) {
@@ -254,7 +272,7 @@ export default class RefresherListView extends Component {
             //以下为 PullUpDown 所需参数
             p_translateY: new Animated.Value(0),// ListView 上拉时候的位移距离，用于展现刷新指示组件
             p_currPullDistance: 0,// ListView 当前上拉或下拉的距离
-            p_lastPullDistance: 0,// 备份p_currPullDistance
+            p_translating: false,//正在执行回位动画
         };
         RefresherListView.headerRefreshDone = this._headerRefreshDone;
         RefresherListView.footerInfiniteDone = this._footerInfiniteDone;
@@ -263,14 +281,14 @@ export default class RefresherListView extends Component {
     componentWillMount() {
         this._panResponder = PanResponder.create({
             onMoveShouldSetPanResponderCapture: this.onMoveShouldSetPanResponderCapture,
-            onPanResponderMove: this.handlePanResponderMove,
+            onPanResponderMove: this.onPanResponderMove,
             onPanResponderEnd: this.onPanResponderEnd,
             onPanResponderRelease: this.onPanResponderRelease,
+            onPanResponderTerminate: this.onPanResponderTerminate,
         });
     }
 
     onMoveShouldSetPanResponderCapture = (evt, gestureState) => {
-        this.state.p_lastPullDistance = this.state.p_currPullDistance;
         this.state.l_onTopReached_down = this.state.l_onTopReached_up = this.state.l_onEndReached_up = this.state.l_onEndReached_down = false;
 
         let {l_layout_height, l_contentHeight, gestureStatus} = this.state;
@@ -312,18 +330,15 @@ export default class RefresherListView extends Component {
 
         return (this.props.enableHeaderRefresh && (this.state.l_onTopReached_down || this.state.l_onTopReached_up)) || (this.props.enableFooterInfinite && (this.state.l_onEndReached_up || this.state.l_onEndReached_down));
     };
-    handlePanResponderMove = (evt, gestureState) => {
+    onPanResponderMove = (evt, gestureState) => {
         let _translateY = Math.ceil(Math.abs(gestureState.dy));
         //下拉刷新
-        if (this.state.l_onTopReached_down && gestureState.dy > 0) {
-            if (this.state.gestureStatus === G_STATUS_HEADER_REFRESHING) {
-                this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY;
-                this.state.p_translateY.setValue(this.state.p_currPullDistance);
-            }
-            else {
-                this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY;
-                this.state.p_translateY.setValue(this.state.p_currPullDistance);
+        if (this.state.l_onTopReached_down && gestureState.dy >= 0) {
+            this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY;
+            this.state.p_translateY.setValue(this.state.p_currPullDistance);
+            this._headerRefresh._setAniTranslateY(this.state.p_currPullDistance);
 
+            if (this.state.gestureStatus !== G_STATUS_HEADER_REFRESHING) {
                 if (this.state.p_currPullDistance >= G_PULL_DOWN_DISTANCE - G_PILL_DOWN_FIX_DISTANCE) {
                     if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
                         this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH;
@@ -337,24 +352,18 @@ export default class RefresherListView extends Component {
                     }
                 }
             }
-            this._headerRefresh._setAniTranslateY(this.state.p_currPullDistance);
         }
         //上拉隐藏刷新面板
-        else if (this.state.l_onTopReached_up && gestureState.dy < 0) {
-            this.state.p_currPullDistance = this.state.p_lastPullDistance + gestureState.dy;
-            this.state.p_currPullDistance < 0 ? this.state.p_currPullDistance = 0 : null;
-            this.state.p_translateY.setValue(this.state.p_currPullDistance);
-            this._headerRefresh._setAniTranslateY(this.state.p_currPullDistance);
+        else if (this.state.l_onTopReached_up && gestureState.dy <= 0) {
+            this._headerRefreshDoneAni();
         }
         //上拉加载更多
-        else if (this.state.l_onEndReached_up && gestureState.dy < 0) {
-            if (this.state.gestureStatus === G_STATUS_FOOTER_REFRESHING) {
-                this.state.p_translateY.setValue(_translateY >= G_PULL_UP_DISTANCE ? -G_PULL_UP_DISTANCE : -_translateY);
-                this.state.p_currPullDistance = _translateY >= G_PULL_UP_DISTANCE ? G_PULL_UP_DISTANCE : _translateY;
-            }
-            else {
-                this.state.p_translateY.setValue(_translateY >= G_PULL_UP_DISTANCE ? -G_PULL_UP_DISTANCE : -_translateY);
-                this.state.p_currPullDistance = _translateY >= G_PULL_UP_DISTANCE ? G_PULL_UP_DISTANCE : _translateY;
+        else if (this.state.l_onEndReached_up && gestureState.dy <= 0) {
+            this.state.p_currPullDistance = _translateY >= G_PULL_UP_DISTANCE ? G_PULL_UP_DISTANCE : _translateY;
+            this.state.p_translateY.setValue(-this.state.p_currPullDistance);
+            this._footerInfinite._setAniTranslateY(this.state.p_currPullDistance);
+
+            if (this.state.gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
                 if (this.state.p_currPullDistance >= G_PULL_UP_DISTANCE - G_PILL_UP_FIX_DISTANCE) {
                     if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
                         this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH;
@@ -368,32 +377,17 @@ export default class RefresherListView extends Component {
                     }
                 }
             }
-            this._footerInfinite._setAniTranslateY(this.state.p_currPullDistance);
         }
         //下拉隐藏加载更多面板
-        else if (this.state.l_onEndReached_down && gestureState.dy > 0) {
-            this.state.p_currPullDistance = this.state.p_lastPullDistance - gestureState.dy;
-            this.state.p_currPullDistance < 0 ? this.state.p_currPullDistance = 0 : null;
-            this.state.p_translateY.setValue(-this.state.p_currPullDistance);
-            this._footerInfinite._setAniTranslateY(this.state.p_currPullDistance);
+        else if (this.state.l_onEndReached_down && gestureState.dy >= 0) {
+            this._footerInfiniteDoneAni();
         }
     };
     onPanResponderEnd = () => {
         //下拉刷新
         if (this.state.l_onTopReached_down || this.state.l_onTopReached_up) {
             if (this.state.p_currPullDistance < G_PULL_DOWN_DISTANCE - G_PILL_DOWN_FIX_DISTANCE) {
-                this.state.p_currPullDistance = 0;
-                let _headerAniTranslateY = this._headerRefresh._getAniTranslateY();
-                Animated.parallel([
-                    Animated.timing(this.state.p_translateY, {
-                        toValue: 0,
-                        duration: 100
-                    }),
-                    Animated.timing(_headerAniTranslateY, {
-                        toValue: -G_PULL_DOWN_DISTANCE,
-                        duration: 100
-                    }),
-                ]).start();
+                this._headerRefreshDoneAni();
             }
             else {
                 if (this.state.gestureStatus !== G_STATUS_HEADER_REFRESHING) {
@@ -405,18 +399,7 @@ export default class RefresherListView extends Component {
         //上拉加载更多
         else if (this.state.l_onEndReached_up || this.state.l_onEndReached_down) {
             if (this.state.p_currPullDistance < G_PULL_UP_DISTANCE - G_PILL_UP_FIX_DISTANCE) {
-                this.state.p_currPullDistance = 0;
-                let _footerAniTranslateY = this._footerInfinite._getAniTranslateY();
-                Animated.parallel([
-                    Animated.timing(this.state.p_translateY, {
-                        toValue: 0,
-                        duration: 100
-                    }),
-                    Animated.timing(_footerAniTranslateY, {
-                        toValue: G_PULL_UP_DISTANCE,
-                        duration: 100
-                    }),
-                ]).start();
+                this._footerInfiniteDoneAni();
             }
             else {
                 if (this.state.gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
@@ -429,6 +412,11 @@ export default class RefresherListView extends Component {
     onPanResponderRelease = () => {
         if (this.state.p_currPullDistance !== 0) {
             this.onPanResponderEnd();
+        }
+    };
+    onPanResponderTerminate = (evt, gestureState) => {
+        if (this.state.p_currPullDistance !== 0) {
+            this.onPanResponderMove(evt, gestureState);
         }
     };
 

@@ -38,7 +38,7 @@ export default class RefresherListView extends Component {
             onResponderReject: this.onResponderReject,//当前有其他的东西成为响应器并且没有释放它
 
             onPanResponderStart: this.onPanResponderStart,
-            onPanResponderMove: this.handlePanResponderMove,
+            onPanResponderMove: this.onPanResponderMove,
             onPanResponderEnd: this.onPanResponderEnd,
             onPanResponderRelease: this.onPanResponderRelease,
         });
@@ -80,7 +80,7 @@ export default class RefresherListView extends Component {
 
     //========================API 调用顺序 part 4========================
     //以下方法顺序调用
-    handlePanResponderMove = () => {
+    onPanResponderMove = () => {
         window.console.log('debug keyword: handlePanResponderMove === call order 5.');
     };
     onPanResponderEnd = () => {
