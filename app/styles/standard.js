@@ -1,8 +1,8 @@
 /**
- * Created by hebao on 2017/6/8.
+ * Created by hebao on 2017/5/11.
  */
 import Util from '../utility/util';
-const StandardStyle = {
+const HBStyle = {
     color: {
         wred: '#f85f30',
         wblack: '#000000',
@@ -24,15 +24,20 @@ const StandardStyle = {
         btn_d: '#ffc8bd',
 
         gray_press: '#f2f2f2',
-        common_gray_press: '#eaeaea',
-        common_green_status: '#6975ea',
-        common_green_item_bg: '#44b5ea',
-        common_gray_line: '#eaeaea',
 
-        text_black_w: '#000000',
-        text_gray_w_main: '#dfdfdf',
-        text_red_w: '#ff00ff',
-        text_white_w: '#ffffff',
+        //键盘按钮色
+        common_gray_bg: '#EFEFEF',
+        common_gray_fa: '#FAFAFA',
+
+        common_gray_line: '#EAEAEA',//分割线、衬线
+        common_gray_press: '#F2F2F2',//列表项的按下颜色
+        common_green_status: '#41C557',//绿色状态色
+        common_green_item_bg: '#83de8b',//我的投资还款进度条背景、投资列表还款圆、投资详情还款圆
+
+        text_red_w:'#F85F30',//金额文字主题色
+        text_black_w: '#000000',//黑色文字、主要内容
+        text_gray_w_main: '#B8B8B8',//灰色文字、副标题、副文
+        text_white_w: '#FFFFFF',//白色文字
     },
     gap: {
         gap_edge: 14,
@@ -78,4 +83,4 @@ const StandardStyle = {
         }
     },
 };
-export default StandardStyle;
+export default HBStyle;

@@ -38,9 +38,9 @@ export default class RefresherListView extends Component {
             onResponderReject: this.onResponderReject,//当前有其他的东西成为响应器并且没有释放它
 
             onPanResponderStart: this.onPanResponderStart,
-            onPanResponderMove: this.onPanResponderMove,
-            onPanResponderEnd: this.onPanResponderEnd,
-            onPanResponderRelease: this.onPanResponderRelease,
+            onPanResponderMove: this.onPanResponderMove,//有可能会直接 End （如果手势快的话） ，所以 Move 不一定会执行
+            onPanResponderEnd: this.onPanResponderEnd,// End 函数一定会执行，不管是否 onPanResponderTerminate 已经被夺去了响应，如果夺去了响应，也会先 End -> onPanResponderTerminate
+            onPanResponderRelease: this.onPanResponderRelease,//有可能会直接 End （如果手势快的话），所以 Release 不一定会执行
         });
     }
 
