@@ -35,7 +35,7 @@ export default class RefresherListView extends Component {
 
             //Api 调用顺序
             onPanResponderGrant: this.onPanResponderGrant,//视图现在正在响应触摸事件。这个时候要高亮标明并显示给用户正在发生的事情
-            onResponderReject: this.onResponderReject,//当前有其他的东西成为响应器并且没有释放它
+            onPanResponderReject: this.onPanResponderReject,//当前有其他的东西成为响应器并且没有释放它
 
             onPanResponderStart: this.onPanResponderStart,
             onPanResponderMove: this.onPanResponderMove,//有可能会直接 End （如果手势快的话） ，所以 Move 不一定会执行
@@ -64,12 +64,12 @@ export default class RefresherListView extends Component {
     };
 
     //========================API 调用顺序 part 2========================
-    //onPanResponderGrant 方法和 onResponderReject 方法视情况而调用
+    //onPanResponderGrant 方法和 onPanResponderReject 方法视情况而调用
     onPanResponderGrant = () => {
         window.console.log('debug keyword: onPanResponderGrant === call order 3.');
     };
-    onResponderReject = () => {
-        window.console.log('debug keyword: onResponderReject === call order 3.');
+    onPanResponderReject = () => {
+        window.console.log('debug keyword: onPanResponderReject === call order 3.');
     };
 
     //========================API 调用顺序 part 3========================
