@@ -4,7 +4,7 @@
 import {StackNavigator} from 'react-navigation';
 import {FadeToTheLeft} from './transitionConfig';
 
-import MainScreen from '../components/refreshableListView/example';
+import MainScreen from '../testView/mobxTest';
 import RouterTestPage from '../testView/routerTestPage';
 export const MainApp = StackNavigator({
     Main: {screen: MainScreen},
