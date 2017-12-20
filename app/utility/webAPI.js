@@ -40,7 +40,7 @@ function _startLoading(options) {
         Util.trigger(ACTIONS.ACTION_LOADING_DONE, {
             done: true,
             onClose: () => {
-                Util.toast.show('网络加载超时，请检查网络！');
+                //Util.toast.show('网络加载超时，请检查网络！');
                 options.overTimeCallback instanceof Function && options.overTimeCallback();
             }
         });
