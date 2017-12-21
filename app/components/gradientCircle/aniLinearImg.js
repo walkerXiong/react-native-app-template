@@ -63,9 +63,9 @@ export default class CircularProgress extends Component {
       let circlePath = arc()
         .innerRadius(r1)
         .outerRadius(r2)
-        //.cornerRadius(i === 0 || i === noOfSeg - 1 ? ((r2 - r1) / 2) : 0)
-        .startAngle(_startAngle)
-        .endAngle(_endAngle)
+        .cornerRadius(i === 0 || i === noOfSeg - 1 ? ((r2 - r1) / 2) : 0)
+        .startAngle(_startAngle + (i === noOfSeg - 1 ? -0.05 : 0))
+        .endAngle(_endAngle + (i === 0 ? 0.05 : 0))
 
       this.linearPaths.push(
         <Path
@@ -81,12 +81,12 @@ export default class CircularProgress extends Component {
   render() {
     let {currAngle, endAngle, r2} = this.props
 
-    //+-0.01用于扇形的角度补偿，+2用于扇形的面积补偿
+    //+2用于扇形的面积补偿
     let circlePath = arc()
       .innerRadius(0)
       .outerRadius(r2 + 2)
-      .startAngle(2 * Math.PI / 360 * currAngle - 0.01)
-      .endAngle(2 * Math.PI / 360 * endAngle + 0.01)
+      .startAngle(2 * Math.PI / 360 * currAngle)
+      .endAngle(2 * Math.PI / 360 * endAngle)
 
     return (
       <View style={Styles.wrap}>
