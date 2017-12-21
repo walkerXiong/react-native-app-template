@@ -9,11 +9,14 @@ import {arc, line} from 'd3-shape'
 export default class TestPage extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      rightDotArr: []
+    }
   }
 
   render() {
     let rIn, rOut, rMiddle, startAngle
-    let {endAngle} = this.props;
+    let {endAngle, startX} = this.props;
     rIn = 50;//inner circle radius
     rOut = 55;//outer circle radius
     rMiddle = 52.5;//middle circle radius
@@ -27,13 +30,20 @@ export default class TestPage extends Component {
       .startAngle(startAngle)
       .endAngle(2 * Math.PI / 360 * endAngle);
 
-    let rightDotArr = [
-      [0, 0],
-      [25, 15],
-      [50, -25],
-    ];
+    // rightDotArr = [
+    //   [0, 0],
+    //   [25, 15],
+    //   [50, -25],
+    // ];
+    startX = Math.floor(startX);
+    if (startX <= 25) {
+      this.state.rightDotArr.push([startX, Number((3 / 5 * startX).toFixed(2))]);
+    }
+    else {
+      this.state.rightDotArr.push([startX, Number((8 / 5 * (34.375 - startX)).toFixed(2))])
+    }
 
-    let rightPath = line();
+    let rightPath = line()(this.state.rightDotArr);
 
     return (
       <View style={Styles.wrap}>
@@ -62,7 +72,7 @@ export default class TestPage extends Component {
               <Path
                 x={120}
                 y={100}
-                d={rightPath(rightDotArr)}
+                d={rightPath}
                 fill="transparent"
                 stroke={'red'}
                 strokeWidth={5}

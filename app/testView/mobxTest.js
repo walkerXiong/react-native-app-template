@@ -7,7 +7,8 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Animated
+  Animated,
+  Easing
 } from 'react-native';
 
 import {observable, action, autorun, computed} from 'mobx';
@@ -27,24 +28,32 @@ const MyAniSvgAndD3 = Animated.createAnimatedComponent(AniSvgAndD3);
 
 class AniCircle extends Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
-      endAngle: new Animated.Value(0)
+      endAngle: new Animated.Value(0),
+      startX: new Animated.Value(0)
     }
   }
 
   componentDidMount() {
     setTimeout(() => {
       Animated.timing(this.state.endAngle, {
+        easing: Easing.linear,
         toValue: 300,
         duration: 3000
-      }).start();
-    }, 2000);
+      }).start(() => {
+        Animated.timing(this.state.startX, {
+          easing: Easing.linear,
+          toValue: 50,
+          duration: 1000
+        }).start()
+      });
+    }, 2000)
   }
 
   render() {
     return (
-      <MyAniSvgAndD3 endAngle={this.state.endAngle}/>
+      <MyAniSvgAndD3 endAngle={this.state.endAngle} startX={this.state.startX}/>
     )
   }
 }
