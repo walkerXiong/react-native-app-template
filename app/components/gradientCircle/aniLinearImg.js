@@ -9,6 +9,7 @@ export default class CircularProgress extends Component {
   linearPaths = [];
 
   static propTypes = {
+    currAngle: PropTypes.number,
     startAngle: PropTypes.number,
     endAngle: PropTypes.number,
     startColor: PropTypes.string,
@@ -19,11 +20,12 @@ export default class CircularProgress extends Component {
   }
 
   static defaultProps = {
+    currAngle: 0,
     startAngle: 0,
     endAngle: 360,
     startColor: '#f95c06',
     endColor: '#ffba00',
-    noOfSeg: 10,
+    noOfSeg: 5,
     r1: 50,
     r2: 55,
   }
@@ -39,6 +41,7 @@ export default class CircularProgress extends Component {
     let _stepColors = Chroma.scale([startColor, endColor]).colors(noOfSeg + 1)
     console.log('xq debug===_stepColors:' + JSON.stringify(_stepColors))
     let _stepAngle = 2 * Math.PI / 360 * (endAngle - startAngle) / noOfSeg
+    startAngle = 2 * Math.PI / 360 * startAngle
 
     for (let i = 0; i < noOfSeg; i++) {
       let _startAngle = startAngle + i * _stepAngle
@@ -76,6 +79,15 @@ export default class CircularProgress extends Component {
   }
 
   render() {
+    let {currAngle, endAngle, r2} = this.props
+
+    //+-0.01用于扇形的角度补偿，+2用于扇形的面积补偿
+    let circlePath = arc()
+      .innerRadius(0)
+      .outerRadius(r2 + 2)
+      .startAngle(2 * Math.PI / 360 * currAngle - 0.01)
+      .endAngle(2 * Math.PI / 360 * endAngle + 0.01)
+
     return (
       <View style={Styles.wrap}>
         <View style={{width: 300, height: 200, marginTop: 2}}>
@@ -85,6 +97,11 @@ export default class CircularProgress extends Component {
             </Defs>
             <G>
               {this.linearPaths}
+              <Path
+                x={150}
+                y={100}
+                d={circlePath()}
+                fill={'#ffffff'}/>
             </G>
           </Svg>
         </View>

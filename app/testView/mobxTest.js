@@ -19,28 +19,28 @@ import WebAPI from '../utility/webAPI';
 import * as ACTIONS from '../utility/events';
 
 import AlertSys from '../components/AlertSys';
-import AniSvgAndD3 from '../components/gradientCircle/aniSvgAndD3';
+import AniSvgAndD3 from '../components/gradientCircle/aniLinearImg';
 import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
 import NumericKeyboard from '../components/keyboard/NumericKeyboard';
 
 const MyAniSvgAndD3 = Animated.createAnimatedComponent(AniSvgAndD3);
 
-class AniCircle extends Component {
+class AniLinearImg extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      endAngle: new Animated.Value(0),
+      currAngle: new Animated.Value(0),
       startX: new Animated.Value(0)
     }
   }
 
   componentDidMount() {
     setTimeout(() => {
-      Animated.timing(this.state.endAngle, {
+      Animated.timing(this.state.currAngle, {
         easing: Easing.linear,
         toValue: 300,
-        duration: 3000
+        duration: 1600
       }).start(() => {
         Animated.timing(this.state.startX, {
           easing: Easing.linear,
@@ -53,7 +53,7 @@ class AniCircle extends Component {
 
   render() {
     return (
-      <MyAniSvgAndD3 endAngle={this.state.endAngle} startX={this.state.startX}/>
+      <MyAniSvgAndD3 currAngle={this.state.currAngle} endAngle={300}/>
     )
   }
 }
@@ -141,7 +141,7 @@ class ReduxTestPage extends Component {
         </TouchableOpacity>
         <CountAge/>
         <TextInput style={Styles.commonInput} ref={(ref) => this._myInput = ref}/>
-        <AniCircle/>
+        <AniLinearImg />
         <NumericKeyboard
           keyboardShow={Success}
           keyboardType={1}
@@ -184,6 +184,7 @@ const Styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
+    backgroundColor: '#ffffff'
   },
   btn: {
     width: 200,
