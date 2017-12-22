@@ -19,7 +19,7 @@ import WebAPI from '../utility/webAPI';
 import * as ACTIONS from '../utility/events';
 
 import AlertSys from '../components/AlertSys';
-import AniSvgAndD3 from '../components/gradientCircle/aniLinearImg';
+import AniSvgAndD3 from '../components/gradientCircle/aniSvgAndD3';
 import Loading from '../components/Loading';
 import NavActivity from '../components/NavActivity';
 import NumericKeyboard from '../components/keyboard/NumericKeyboard';
