@@ -1,14 +1,16 @@
 import React, {Component, PropTypes} from 'react'
 import {StyleSheet, View} from 'react-native'
 import Svg, {Defs, Stop, G, Path, LinearGradient} from 'react-native-svg'
-import {arc} from 'd3-shape'
+import {arc, line} from 'd3-shape'
 import Chroma from 'chroma-js'
 
 export default class CircularProgress extends Component {
-  linearDefs = [];
-  linearPaths = [];
+  linearDefs = []
+  linearPaths = []
+  linearTicks = [[0, 0]]
 
   static propTypes = {
+    currTickPos: PropTypes.number,
     currAngle: PropTypes.number,
     startAngle: PropTypes.number,
     endAngle: PropTypes.number,
@@ -20,6 +22,7 @@ export default class CircularProgress extends Component {
   }
 
   static defaultProps = {
+    currTickPos: 0,
     currAngle: 0,
     startAngle: 0,
     endAngle: 360,
@@ -32,11 +35,14 @@ export default class CircularProgress extends Component {
 
   constructor(props) {
     super(props)
-    this.generateLinear(props);
+    this.state = {
+      tickPosReverse: false
+    }
+    this.generateLinear(props)
   }
 
   generateLinear(props) {
-    let {startAngle, endAngle, startColor, endColor, noOfSeg, r1, r2} = props;
+    let {startAngle, endAngle, startColor, endColor, noOfSeg, r1, r2} = props
 
     let _stepColors = Chroma.scale([startColor, endColor]).colors(noOfSeg + 1)
     console.log('xq debug===_stepColors:' + JSON.stringify(_stepColors))
@@ -79,7 +85,7 @@ export default class CircularProgress extends Component {
   }
 
   render() {
-    let {currAngle, endAngle, r2} = this.props
+    let {currTickPos, currAngle, endAngle, r2} = this.props
 
     //+2用于扇形的面积补偿
     let circlePath = arc()
@@ -88,20 +94,56 @@ export default class CircularProgress extends Component {
       .startAngle(2 * Math.PI / 360 * currAngle)
       .endAngle(2 * Math.PI / 360 * endAngle)
 
+    //[[0, 0], [25, 25], [50, -25]] 对勾的三个点位置起点，转折，终点
+    if (currAngle >= endAngle) {
+      if (currTickPos < 25) {
+        this.linearTicks.push([currTickPos, Number((3 / 5 * currTickPos).toFixed(2))])
+      }
+      else {
+        if (!this.state.tickPosReverse) {
+          this.state.tickPosReverse = true
+          this.linearTicks.push([25, Number((3 / 5 * 25).toFixed(2))])
+        }
+        this.linearTicks.push([currTickPos, Number((8 / 5 * (34.375 - currTickPos)).toFixed(2))])
+      }
+    }
+
     return (
       <View style={Styles.wrap}>
         <View style={{width: 300, height: 200, marginTop: 2}}>
           <Svg width={300} height={200}>
             <Defs>
               {this.linearDefs}
+              <LinearGradient
+                id={'LinearDefTick'}
+                x1={0}
+                y1={0}
+                x2={50}
+                y2={-25}>
+                <Stop offset="0" stopColor={'#ffba00'}/>
+                <Stop offset="1" stopColor={'#f95c06'}/>
+              </LinearGradient>
             </Defs>
-            <G>
+            <G
+              rotate={currAngle >= endAngle ? 0 : (currAngle - endAngle) / 5}
+              origin={'150, 100'}>
               {this.linearPaths}
               <Path
                 x={150}
                 y={100}
                 d={circlePath()}
                 fill={'#ffffff'}/>
+              <Path
+                x={120}
+                y={98}
+                rotate={10}
+                d={line()(this.linearTicks)}
+                fill={'transparent'}
+                stroke={'url(#LinearDefTick)'}
+                strokeLinecap={'round'}
+                strokeLinejoin={'round'}
+                strokeWidth={5}
+              />
             </G>
           </Svg>
         </View>

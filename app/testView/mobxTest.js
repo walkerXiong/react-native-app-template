@@ -31,7 +31,7 @@ class AniLinearImg extends Component {
     super(props)
     this.state = {
       currAngle: new Animated.Value(0),
-      startX: new Animated.Value(0)
+      currTickPos: new Animated.Value(0)
     }
   }
 
@@ -42,10 +42,10 @@ class AniLinearImg extends Component {
         toValue: 300,
         duration: 1600
       }).start(() => {
-        Animated.timing(this.state.startX, {
+        Animated.timing(this.state.currTickPos, {
           easing: Easing.linear,
           toValue: 50,
-          duration: 1000
+          duration: 800
         }).start()
       });
     }, 2000)
@@ -53,7 +53,7 @@ class AniLinearImg extends Component {
 
   render() {
     return (
-      <MyAniSvgAndD3 currAngle={this.state.currAngle} endAngle={300}/>
+      <MyAniSvgAndD3 currAngle={this.state.currAngle} currTickPos={this.state.currTickPos} endAngle={300}/>
     )
   }
 }
