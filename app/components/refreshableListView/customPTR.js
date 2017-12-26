@@ -27,9 +27,9 @@ const
 
 let
   G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
-  G_PILL_UP_FIX_DISTANCE = 8,//上拉加载更多可上拉距离小于 8 时触发上拉加载
-  G_PULL_DOWN_DISTANCE = 60,//下拉刷新最大下拉距离
-  G_PILL_DOWN_FIX_DISTANCE = 20;//下拉刷新可下拉距离小于 20 时触发下拉刷新
+  G_PULL_UP_FIX_DISTANCE = 8,//上拉加载更多可上拉距离小于 8 时触发上拉加载
+  G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
+  G_MAX_PULL_DOWN_DISTANCE = height / 2;//下拉刷新最大下拉距离
 
 const _renderHeaderRefresh = (gestureStatus) => {
   switch (gestureStatus) {
@@ -77,7 +77,7 @@ class HeaderRefresh extends Component {
     let {gestureStatus} = this.state;
     return (
       <View
-        style={[Styles.refresh, {height: gestureStatus !== G_STATUS_NONE ? G_PULL_DOWN_DISTANCE : 0}]}>
+        style={[Styles.refresh, {height: gestureStatus !== G_STATUS_NONE ? G_MAX_PULL_DOWN_DISTANCE : 0}]}>
         {this.props.renderHeaderRefresh(gestureStatus)}
       </View>
     )
@@ -147,6 +147,10 @@ class FooterInfinite extends Component {
 }
 
 class MyScrollComponent extends Component {
+  static headerRefreshDone = () => null
+
+  static footerInfiniteDone = () => null
+
   constructor(props) {
     super(props)
     this.state = {
@@ -156,11 +160,39 @@ class MyScrollComponent extends Component {
       startPageY: 0,
       movePageY: 0
     }
+    MyScrollComponent.headerRefreshDone = this._headerRefreshDone
+    MyScrollComponent.footerInfiniteDone = this._footerInfiniteDone
+  }
+
+  _headerRefreshDone = () => {
+    if (this.state.gestureStatus !== G_STATUS_NONE) {
+      this.state.gestureStatus = G_STATUS_NONE
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE, animated: true})
+    }
+  }
+
+  _footerInfiniteDone = () => {
+
   }
 
   onScroll = (e) => {
     console.log('xq debug===onScroll')
-
+    let {y} = e.nativeEvent.contentOffset
+    let {gestureStatus} = this.state
+    if (gestureStatus === G_STATUS_PULLING_DOWN || gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {//下拉刷新
+      if (y <= G_MAX_PULL_DOWN_DISTANCE - G_PULL_DOWN_DISTANCE) {
+        if (gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
+          this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH
+          HeaderRefresh.setGestureStatus(G_STATUS_RELEASE_TO_REFRESH)
+        }
+      }
+      else {
+        if (gestureStatus !== G_STATUS_PULLING_DOWN) {
+          this.state.gestureStatus = G_STATUS_PULLING_DOWN;
+          HeaderRefresh.setGestureStatus(G_STATUS_PULLING_DOWN);
+        }
+      }
+    }
   }
 
   onTouchStart = (e) => {
@@ -178,15 +210,23 @@ class MyScrollComponent extends Component {
     if (movePageY > startPageY && y === 0) {
       //开始下拉刷新
       HeaderRefresh.setGestureStatus(G_STATUS_PULLING_DOWN, () => {
-        this._scrollView.scrollTo({x: 0, y: G_PULL_DOWN_DISTANCE, animated: false})
         this.state.gestureStatus = G_STATUS_PULLING_DOWN
+        this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE, animated: false})
       })
     }
   }
 
   onScrollEndDrag = (e) => {
     console.log('xq debug===onScrollEndDrag')
-    let {y} = e.nativeEvent.contentOffset
+    let {gestureStatus} = this.state
+    if (gestureStatus === G_STATUS_PULLING_DOWN) {
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE, animated: true})
+    }
+    else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+      this.state.gestureStatus = G_STATUS_HEADER_REFRESHING
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE - G_PULL_DOWN_DISTANCE, animated: true})
+      HeaderRefresh.setGestureStatus(G_STATUS_HEADER_REFRESHING)
+    }
   }
 
   onMomentumScrollBegin = () => {
@@ -195,7 +235,6 @@ class MyScrollComponent extends Component {
 
   onMomentumScrollEnd = (e) => {
     console.log('xq debug===onMomentumScrollEnd')
-    let {y} = e.nativeEvent.contentOffset
   }
 
   render() {
@@ -218,6 +257,10 @@ class MyScrollComponent extends Component {
 }
 
 export default class RefresherListView extends Component {
+  static headerRefreshDone = () => MyScrollComponent.headerRefreshDone()
+
+  static footerInfiniteDone = () => MyScrollComponent.footerInfiniteDone()
+
   static propTypes = {
     enableHeaderRefresh: PropTypes.bool,
     renderHeaderRefresh: PropTypes.func,
@@ -234,20 +277,18 @@ export default class RefresherListView extends Component {
     enableHeaderRefresh: true,
     renderHeaderRefresh: _renderHeaderRefresh,
     setHeaderHeight: G_PULL_DOWN_DISTANCE,
-    setHeaderGapToRefresh: G_PILL_DOWN_FIX_DISTANCE,
 
     enableFooterInfinite: false,
     renderFooterInfinite: _renderFooterInfinite,
     setFooterHeight: G_PULL_UP_DISTANCE,
-    setFooterGapToInfinite: G_PILL_UP_FIX_DISTANCE
+    setFooterGapToInfinite: G_PULL_UP_FIX_DISTANCE
   }
 
   constructor(props) {
     super(props)
     G_PULL_DOWN_DISTANCE = props.setHeaderHeight
-    G_PILL_DOWN_FIX_DISTANCE = props.setHeaderGapToRefresh
     G_PULL_UP_DISTANCE = props.setFooterHeight
-    G_PILL_UP_FIX_DISTANCE = props.setFooterGapToInfinite
+    G_PULL_UP_FIX_DISTANCE = props.setFooterGapToInfinite
   }
 
   render() {
@@ -272,7 +313,7 @@ const Styles = StyleSheet.create({
   refresh: {
     width,
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     backgroundColor: '#d6d6d6'
   },
