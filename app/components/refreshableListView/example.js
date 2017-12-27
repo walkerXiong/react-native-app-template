@@ -83,10 +83,10 @@ class HeaderRefresh extends Component {
       <View style={Styles.headerRefresh}>
         {gestureStatus === 4 ?
           <ActivityIndicator
-            size={'large'}
+            size={'small'}
             animating={true}
             color={'#75c5fe'}
-            style={{marginRight: 20}}/> : null}
+            style={{marginRight: 10}}/> : null}
         <Text style={Styles.refreshFont}>{_refreshFont}</Text>
       </View>
     );
@@ -109,7 +109,7 @@ export default class Example extends Component {
     let total = 15;
     if (init) {
       this.data = [];
-      total = Math.ceil(Math.random() * 10);
+      total = Math.ceil(Math.random() * 100);
     }
     for (let i = 0; i < total; i++) {
       this.data.push('row' + Math.ceil(Math.random() * 5));
@@ -157,7 +157,7 @@ export default class Example extends Component {
         }, () => {
           RefresherListView.headerRefreshDone();
         });
-      }, 1000);
+      }, 3000);
     }
     return <HeaderRefresh gestureStatus={gestureStatus}/>;
   };
@@ -188,10 +188,9 @@ export default class Example extends Component {
           showsVerticalScrollIndicator={false}
           enableHeaderRefresh={true}
           setHeaderHeight={60}
-          setHeaderGapToRefresh={8}
+          renderHeaderRefresh={this.renderHeaderRefresh}
           enableFooterInfinite={true}
           setFooterHeight={60}
-          setfootergaptoinfinite={8}
           renderFooterInfinite={this.renderFooterInfinite}/>
       </View>
     );
@@ -334,7 +333,7 @@ const Styles = StyleSheet.create({
   },
   headerRefresh: {
     width: Dimensions.get('window').width,
-    height: 80,
+    height: 60,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center'
