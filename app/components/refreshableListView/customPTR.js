@@ -1,22 +1,19 @@
 /**
  * Created by hebao on 2017/8/28.
  */
-'use strict';
-import React, {Component, PropTypes} from 'react';
+'use strict'
+import React, {Component, PropTypes} from 'react'
 import {
   View,
   StyleSheet,
-  PanResponder,
   ListView,
   Dimensions,
   Animated,
   Text,
-  PixelRatio,
   ScrollView,
-  RefreshControl
-} from 'react-native';
+} from 'react-native'
 
-const {width, height} = Dimensions.get('window');
+const {width, height} = Dimensions.get('window')
 const
   G_STATUS_NONE = 0,// 正常手势，没有上拉或者下拉刷新
   G_STATUS_PULLING_UP = 1,// ListView 处于底部，上拉加载更多
@@ -27,26 +24,41 @@ const
 
 let
   G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
-  G_PULL_UP_FIX_DISTANCE = 8,//上拉加载更多可上拉距离小于 8 时触发上拉加载
   G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
-  G_MAX_PULL_DOWN_DISTANCE = height / 2;//下拉刷新最大下拉距离
+  G_MAX_PULL_DISTANCE = 70;//下拉刷新最大下拉距离
 
 const _renderHeaderRefresh = (gestureStatus) => {
   switch (gestureStatus) {
     case G_STATUS_PULLING_DOWN:
-      return <Text>{'下拉刷新'}</Text>;
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'下拉刷新'}</Text>
+        </View>
+      );
       break;
     case G_STATUS_RELEASE_TO_REFRESH:
-      return <Text>{'松开即可刷新'}</Text>;
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'松开即可刷新'}</Text>
+        </View>
+      );
       break;
     case G_STATUS_HEADER_REFRESHING:
       setTimeout(() => {
         RefresherListView.headerRefreshDone();
       }, 2000);
-      return <Text>{'正在刷新...'}</Text>;
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'正在刷新...'}</Text>
+        </View>
+      );
       break;
     default:
-      return <Text>{'下拉刷新'}</Text>;
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'下拉刷新'}</Text>
+        </View>
+      );
   }
 };
 
@@ -77,7 +89,7 @@ class HeaderRefresh extends Component {
     let {gestureStatus} = this.state;
     return (
       <View
-        style={[Styles.refresh, {height: gestureStatus !== G_STATUS_NONE ? G_MAX_PULL_DOWN_DISTANCE : 0}]}>
+        style={[Styles.refresh, {height: G_MAX_PULL_DISTANCE}]}>
         {this.props.renderHeaderRefresh(gestureStatus)}
       </View>
     )
@@ -164,10 +176,14 @@ class MyScrollComponent extends Component {
     MyScrollComponent.footerInfiniteDone = this._footerInfiniteDone
   }
 
+  componentDidMount() {
+    this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true)
+  }
+
   _headerRefreshDone = () => {
     if (this.state.gestureStatus !== G_STATUS_NONE) {
-      this.state.gestureStatus = G_STATUS_NONE
-      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE, animated: true})
+      this._setGestureStatus(G_STATUS_NONE, null, false)
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: true})
     }
   }
 
@@ -175,21 +191,29 @@ class MyScrollComponent extends Component {
 
   }
 
+  _setGestureStatus = (status, callback, refresh) => {
+    this.state.gestureStatus = status
+    refresh === true ? HeaderRefresh.setGestureStatus(status, callback) : null
+  }
+
   onScroll = (e) => {
     console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
     let {gestureStatus} = this.state
-    if (gestureStatus === G_STATUS_PULLING_DOWN || gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {//下拉刷新
-      if (y <= G_MAX_PULL_DOWN_DISTANCE - G_PULL_DOWN_DISTANCE) {
+    if (gestureStatus === G_STATUS_NONE) {
+      if (y === G_MAX_PULL_DISTANCE) {//刷新完毕归位
+        this._setGestureStatus(G_STATUS_NONE, null, true)
+      }
+    }
+    else if (gestureStatus === G_STATUS_PULLING_DOWN || gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {//下拉刷新
+      if (y <= G_MAX_PULL_DISTANCE - G_PULL_DOWN_DISTANCE) {
         if (gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
-          this.state.gestureStatus = G_STATUS_RELEASE_TO_REFRESH
-          HeaderRefresh.setGestureStatus(G_STATUS_RELEASE_TO_REFRESH)
+          this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true)
         }
       }
       else {
         if (gestureStatus !== G_STATUS_PULLING_DOWN) {
-          this.state.gestureStatus = G_STATUS_PULLING_DOWN;
-          HeaderRefresh.setGestureStatus(G_STATUS_PULLING_DOWN);
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
         }
       }
     }
@@ -204,15 +228,14 @@ class MyScrollComponent extends Component {
   }
 
   onScrollBeginDrag = (e) => {
-    let {startPageY, movePageY} = this.state
     let {y} = e.nativeEvent.contentOffset
-    console.log('xq debug===onScrollBeginDrag===startPageY:' + startPageY + ';movePageY:' + movePageY + ';contentOffset:' + y)
-    if (movePageY > startPageY && y === 0) {
-      //开始下拉刷新
-      HeaderRefresh.setGestureStatus(G_STATUS_PULLING_DOWN, () => {
-        this.state.gestureStatus = G_STATUS_PULLING_DOWN
-        this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE, animated: false})
-      })
+    let {startPageY, movePageY} = this.state
+    console.log('xq debug===onScrollBeginDrag===startPageY:' + startPageY + ';movePageY:' + movePageY)
+    if (movePageY > startPageY) {
+      //开始下拉
+      if (y <= G_MAX_PULL_DISTANCE) {
+        this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+      }
     }
   }
 
@@ -220,12 +243,12 @@ class MyScrollComponent extends Component {
     console.log('xq debug===onScrollEndDrag')
     let {gestureStatus} = this.state
     if (gestureStatus === G_STATUS_PULLING_DOWN) {
-      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE, animated: true})
+      this._setGestureStatus(G_STATUS_NONE, null, false)
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: true})
     }
     else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-      this.state.gestureStatus = G_STATUS_HEADER_REFRESHING
-      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DOWN_DISTANCE - G_PULL_DOWN_DISTANCE, animated: true})
-      HeaderRefresh.setGestureStatus(G_STATUS_HEADER_REFRESHING)
+      this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true)
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE - G_PULL_DOWN_DISTANCE, animated: true})
     }
   }
 
@@ -244,6 +267,7 @@ class MyScrollComponent extends Component {
         ref={ref => this._scrollView = ref}
         onTouchStart={this.onTouchStart}
         onTouchMove={this.onTouchMove}
+        scrollEventThrottle={16}
         onScroll={this.onScroll}
         onScrollBeginDrag={this.onScrollBeginDrag}
         onScrollEndDrag={this.onScrollEndDrag}
@@ -265,12 +289,12 @@ export default class RefresherListView extends Component {
     enableHeaderRefresh: PropTypes.bool,
     renderHeaderRefresh: PropTypes.func,
     setHeaderHeight: PropTypes.number,
-    setHeaderGapToRefresh: PropTypes.number,
 
     enableFooterInfinite: PropTypes.bool,
     renderFooterInfinite: PropTypes.func,
     setFooterHeight: PropTypes.number,
-    setFooterGapToInfinite: PropTypes.number
+
+    setMaxPullDistance: PropTypes.number,
   }
 
   static defaultProps = {
@@ -281,14 +305,15 @@ export default class RefresherListView extends Component {
     enableFooterInfinite: false,
     renderFooterInfinite: _renderFooterInfinite,
     setFooterHeight: G_PULL_UP_DISTANCE,
-    setFooterGapToInfinite: G_PULL_UP_FIX_DISTANCE
+
+    setMaxPullDistance: G_MAX_PULL_DISTANCE,
   }
 
   constructor(props) {
     super(props)
     G_PULL_DOWN_DISTANCE = props.setHeaderHeight
     G_PULL_UP_DISTANCE = props.setFooterHeight
-    G_PULL_UP_FIX_DISTANCE = props.setFooterGapToInfinite
+    G_MAX_PULL_DISTANCE = props.setMaxPullDistance
   }
 
   render() {

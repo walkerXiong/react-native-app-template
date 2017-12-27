@@ -187,7 +187,7 @@ export default class Example extends Component {
           renderRow={this.renderRow}
           showsVerticalScrollIndicator={false}
           enableHeaderRefresh={true}
-          setHeaderHeight={80}
+          setHeaderHeight={60}
           setHeaderGapToRefresh={8}
           enableFooterInfinite={true}
           setFooterHeight={60}
