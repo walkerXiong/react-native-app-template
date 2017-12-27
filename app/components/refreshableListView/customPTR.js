@@ -168,6 +168,10 @@ class MyScrollComponent extends Component {
     this.state = {
       //当前手势状态
       gestureStatus: G_STATUS_NONE,
+      //当前拖动状态
+      onDrag: false,
+      //当前是否惯性滚动状态
+      onScrollWithoutDrag: false,
 
       startPageY: 0,
       movePageY: 0
@@ -199,10 +203,24 @@ class MyScrollComponent extends Component {
   onScroll = (e) => {
     console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
-    let {gestureStatus} = this.state
+    let {gestureStatus, onDrag, onScrollWithoutDrag} = this.state
     if (gestureStatus === G_STATUS_NONE) {
-      if (y === G_MAX_PULL_DISTANCE) {//刷新完毕归位
-        this._setGestureStatus(G_STATUS_NONE, null, true)
+      if (onDrag) {
+        //开始下拉
+        if (y <= G_MAX_PULL_DISTANCE) {
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+        }
+      }
+      else {
+        if (onScrollWithoutDrag) {
+          //当前状态为正在惯性滚动
+        }
+        else {
+          //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
+          if (y === G_MAX_PULL_DISTANCE) {//刷新完毕归位
+            this._setGestureStatus(G_STATUS_NONE, null, true)
+          }
+        }
       }
     }
     else if (gestureStatus === G_STATUS_PULLING_DOWN || gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {//下拉刷新
@@ -228,19 +246,24 @@ class MyScrollComponent extends Component {
   }
 
   onScrollBeginDrag = (e) => {
+    this.state.onDrag = true
+
     let {y} = e.nativeEvent.contentOffset
     let {startPageY, movePageY} = this.state
     console.log('xq debug===onScrollBeginDrag===startPageY:' + startPageY + ';movePageY:' + movePageY)
-    if (movePageY > startPageY) {
-      //开始下拉
+    if (movePageY > startPageY) {//下拉
       if (y <= G_MAX_PULL_DISTANCE) {
         this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
       }
+    }
+    else if (movePageY < startPageY) {//上滑
     }
   }
 
   onScrollEndDrag = (e) => {
     console.log('xq debug===onScrollEndDrag')
+    this.state.onDrag = false
+
     let {gestureStatus} = this.state
     if (gestureStatus === G_STATUS_PULLING_DOWN) {
       this._setGestureStatus(G_STATUS_NONE, null, false)
@@ -253,11 +276,19 @@ class MyScrollComponent extends Component {
   }
 
   onMomentumScrollBegin = () => {
+    //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
     console.log('xq debug===onMomentumScrollBegin')
+    this.state.onScrollWithoutDrag = true
   }
 
   onMomentumScrollEnd = (e) => {
     console.log('xq debug===onMomentumScrollEnd')
+    this.state.onScrollWithoutDrag = false
+
+    let {y} = e.nativeEvent.contentOffset
+    if (y <= G_MAX_PULL_DISTANCE) {
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: true})
+    }
   }
 
   render() {
