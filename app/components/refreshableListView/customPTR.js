@@ -166,9 +166,11 @@ class MyScrollComponent extends Component {
       onDrag: false,
       //当前是否惯性滚动状态
       onScrollWithoutDrag: false,
+      offset: 0,
 
       startPageY: 0,
-      movePageY: 0
+      movePageY: 0,
+      getDirection: false
     }
     MyScrollComponent.headerRefreshDone = this._headerRefreshDone
     MyScrollComponent.footerInfiniteDone = this._footerInfiniteDone
@@ -197,6 +199,8 @@ class MyScrollComponent extends Component {
   onScroll = (e) => {
     console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
+    this.state.offset = y
+
     let {gestureStatus, onDrag, onScrollWithoutDrag} = this.state
     if (gestureStatus === G_STATUS_NONE) {
       if (onDrag) {
@@ -237,11 +241,17 @@ class MyScrollComponent extends Component {
   }
 
   onTouchStart = (e) => {
+    this.state.getDirection = false
     this.state.startPageY = e.nativeEvent.pageY
   }
 
   onTouchMove = (e) => {
     this.state.movePageY = e.nativeEvent.pageY
+    if (!this.state.getDirection && this.state.offset === 0 && this.state.movePageY > this.state.startPageY) {
+      this.state.getDirection = true
+      this._headerRefreshWrap.setNativeProps({style: {height: G_MAX_PULL_DISTANCE}})
+      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: false})
+    }
   }
 
   onScrollBeginDrag = (e) => {
@@ -253,8 +263,6 @@ class MyScrollComponent extends Component {
     if (movePageY > startPageY) {//下拉
       if (y <= 1) {
         this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
-        this._headerRefreshWrap.setNativeProps({style: {height: G_MAX_PULL_DISTANCE}})
-        this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: false})
       }
     }
     else if (movePageY < startPageY) {//上滑
@@ -264,6 +272,7 @@ class MyScrollComponent extends Component {
   onScrollEndDrag = (e) => {
     console.log('xq debug===onScrollEndDrag')
     this.state.onDrag = false
+    this.state.offset = e.nativeEvent.contentOffset.y
 
     let {gestureStatus} = this.state
     if (gestureStatus === G_STATUS_PULLING_DOWN) {
@@ -285,6 +294,7 @@ class MyScrollComponent extends Component {
   onMomentumScrollEnd = (e) => {
     console.log('xq debug===onMomentumScrollEnd')
     this.state.onScrollWithoutDrag = false
+    this.state.offset = e.nativeEvent.contentOffset.y
   }
 
   render() {

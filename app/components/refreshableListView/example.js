@@ -124,7 +124,7 @@ export default class Example extends Component {
         <View style={Styles.listItem}>
           <View style={Styles.commonColumnSS}>
             <View style={Styles.itemWrap}>
-              <Text style={Styles.font_3}>{'name'}</Text>
+              <Text style={Styles.font_3}>{rowData + Math.ceil(Math.random() * 1000)}</Text>
               <Text style={Styles.font_2}>{'融资金额(元)'}</Text>
             </View>
             <View style={[Styles.itemWrap, {marginTop: 11}]}>
