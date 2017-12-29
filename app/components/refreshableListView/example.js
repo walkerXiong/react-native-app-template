@@ -181,7 +181,7 @@ export default class Example extends Component {
   render() {
     return (
       <View style={Styles.wrap}>
-        <View style={{height: 44, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
+        <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
         <RefresherListView
           dataSource={this.state.dataSource}
           renderRow={this.renderRow}

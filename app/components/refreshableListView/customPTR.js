@@ -279,6 +279,7 @@ class MyScrollComponent extends Component {
           if (onScrollWithoutDrag) {
             this.state.isHeaderValid = false
             this._headerRefreshWrap.setNativeProps({style: {height: 0}})
+            this._scrollView.scrollTo({x: 0, y: y - G_MAX_PULL_DISTANCE, animated: false})
           }
         }
         else if (movePageY < startPageY) {
