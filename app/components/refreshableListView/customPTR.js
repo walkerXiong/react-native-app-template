@@ -202,10 +202,22 @@ class MyScrollComponent extends Component {
   onScroll = (e) => {
     console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
-    let {gestureStatus, onDrag, onScrollWithoutDrag} = this.state
+    let {gestureStatus, onDrag, onScrollWithoutDrag, startPageY, movePageY, isHeaderValid} = this.state
     if (gestureStatus === G_STATUS_NONE) {
       if (onDrag) {
         //开始下拉
+        if (!isHeaderValid) {
+          if (y <= 1) {
+            if (movePageY > startPageY) {
+              //下拉
+              this.state.isHeaderValid = true
+              this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+
+              this._headerRefreshWrap.setNativeProps({style: {height: G_MAX_PULL_DISTANCE}})
+              this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: false})
+            }
+          }
+        }
       }
       else {
         if (onScrollWithoutDrag) {
