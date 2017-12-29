@@ -153,6 +153,8 @@ class FooterInfinite extends Component {
 }
 
 class MyScrollComponent extends Component {
+  resetHeaderHeightHandle = -1
+
   static headerRefreshDone = () => null
 
   static footerInfiniteDone = () => null
@@ -166,11 +168,10 @@ class MyScrollComponent extends Component {
       onDrag: false,
       //当前是否惯性滚动状态
       onScrollWithoutDrag: false,
-      offset: 0,
 
       startPageY: 0,
       movePageY: 0,
-      getDirection: false
+      isHeaderValid: false
     }
     MyScrollComponent.headerRefreshDone = this._headerRefreshDone
     MyScrollComponent.footerInfiniteDone = this._footerInfiniteDone
@@ -178,6 +179,10 @@ class MyScrollComponent extends Component {
 
   componentDidMount() {
     //this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true)
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.resetHeaderHeightHandle)
   }
 
   _headerRefreshDone = () => {
@@ -190,26 +195,17 @@ class MyScrollComponent extends Component {
   }
 
   _setGestureStatus = (status, callback, refresh) => {
-    if (this.state.gestureStatus !== status || refresh === true) {
-      this.state.gestureStatus = status
-      refresh === true ? HeaderRefresh.setGestureStatus(status, callback) : null
-    }
+    this.state.gestureStatus = status
+    refresh === true ? HeaderRefresh.setGestureStatus(status, callback) : null
   }
 
   onScroll = (e) => {
     console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
-    this.state.offset = y
-
     let {gestureStatus, onDrag, onScrollWithoutDrag} = this.state
     if (gestureStatus === G_STATUS_NONE) {
       if (onDrag) {
         //开始下拉
-        if (y <= 1) {
-          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
-          this._headerRefreshWrap.setNativeProps({style: {height: G_MAX_PULL_DISTANCE}})
-          this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: false})
-        }
       }
       else {
         if (onScrollWithoutDrag) {
@@ -220,8 +216,6 @@ class MyScrollComponent extends Component {
           if (y === G_MAX_PULL_DISTANCE) {
             //刷新完毕归位
             this._setGestureStatus(G_STATUS_NONE, null, true)
-            this._headerRefreshWrap.setNativeProps({style: {height: 0}})
-            this._scrollView.scrollTo({x: 0, y: 0, animated: false})
           }
         }
       }
@@ -241,40 +235,66 @@ class MyScrollComponent extends Component {
   }
 
   onTouchStart = (e) => {
-    this.state.getDirection = false
+    console.log('onTouchStart')
     this.state.startPageY = e.nativeEvent.pageY
   }
 
   onTouchMove = (e) => {
+    console.log('onTouchMove')
     this.state.movePageY = e.nativeEvent.pageY
-    if (!this.state.getDirection && this.state.offset === 0 && this.state.movePageY > this.state.startPageY) {
-      this.state.getDirection = true
-      this._headerRefreshWrap.setNativeProps({style: {height: G_MAX_PULL_DISTANCE}})
-      this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: false})
-    }
   }
 
   onScrollBeginDrag = (e) => {
+    console.log('xq debug===onScrollBeginDrag')
     this.state.onDrag = true
 
     let {y} = e.nativeEvent.contentOffset
-    let {startPageY, movePageY} = this.state
-    console.log('xq debug===onScrollBeginDrag===startPageY:' + startPageY + ';movePageY:' + movePageY + ';contentOffset:' + y)
-    if (movePageY > startPageY) {//下拉
-      if (y <= 1) {
-        this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+    let {startPageY, movePageY, isHeaderValid, onScrollWithoutDrag} = this.state
+    if (!isHeaderValid) {
+      if (y === 0) {
+        if (movePageY > startPageY) {
+          //下拉
+          this.state.isHeaderValid = true
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+
+          this._headerRefreshWrap.setNativeProps({style: {height: G_MAX_PULL_DISTANCE}})
+          this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: false})
+        }
       }
     }
-    else if (movePageY < startPageY) {//上滑
+    else {
+      if (y === G_MAX_PULL_DISTANCE) {
+        if (movePageY > startPageY) {
+          //下拉
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+        }
+        else if (movePageY < startPageY) {
+          //上滑
+          this._setGestureStatus(G_STATUS_NONE, null, true)
+        }
+      }
+      else {
+        if (movePageY > startPageY) {
+          //下拉
+          if (onScrollWithoutDrag) {
+            this.state.isHeaderValid = false
+            this._headerRefreshWrap.setNativeProps({style: {height: 0}})
+          }
+        }
+        else if (movePageY < startPageY) {
+          //上滑
+          this._setGestureStatus(G_STATUS_NONE, null, true)
+        }
+      }
     }
   }
 
   onScrollEndDrag = (e) => {
     console.log('xq debug===onScrollEndDrag')
     this.state.onDrag = false
-    this.state.offset = e.nativeEvent.contentOffset.y
 
-    let {gestureStatus} = this.state
+    let {y} = e.nativeEvent.contentOffset
+    let {gestureStatus, startPageY, movePageY, isHeaderValid} = this.state
     if (gestureStatus === G_STATUS_PULLING_DOWN) {
       this._setGestureStatus(G_STATUS_NONE, null, false)
       this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE, animated: true})
@@ -283,18 +303,42 @@ class MyScrollComponent extends Component {
       this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true)
       this._scrollView.scrollTo({x: 0, y: G_MAX_PULL_DISTANCE - G_PULL_DOWN_DISTANCE, animated: true})
     }
+
+    if (isHeaderValid) {
+      if (movePageY < startPageY) {
+        //上滑
+        this.resetHeaderHeightHandle = setTimeout(() => {
+          console.log('setTimeout exec')
+          this.state.isHeaderValid = false
+          this._headerRefreshWrap.setNativeProps({style: {height: 0}})
+          this._scrollView.scrollTo({x: 0, y: y - G_MAX_PULL_DISTANCE, animated: false})
+        }, 100)
+      }
+    }
   }
 
   onMomentumScrollBegin = () => {
     //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
     console.log('xq debug===onMomentumScrollBegin')
     this.state.onScrollWithoutDrag = true
+    clearTimeout(this.resetHeaderHeightHandle)
   }
 
   onMomentumScrollEnd = (e) => {
     console.log('xq debug===onMomentumScrollEnd')
     this.state.onScrollWithoutDrag = false
-    this.state.offset = e.nativeEvent.contentOffset.y
+
+    let {y} = e.nativeEvent.contentOffset
+    let {startPageY, movePageY, isHeaderValid} = this.state
+    if (isHeaderValid) {
+      if (movePageY < startPageY) {
+        //上滑
+        console.log('onMomentumScrollEnd exec')
+        this.state.isHeaderValid = false
+        this._headerRefreshWrap.setNativeProps({style: {height: 0}})
+        this._scrollView.scrollTo({x: 0, y: y - G_MAX_PULL_DISTANCE, animated: false})
+      }
+    }
   }
 
   render() {
