@@ -24,8 +24,7 @@ const
 
 let
   G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
-  G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
-  G_MAX_PULL_DISTANCE = 70;//下拉刷新最大下拉距离
+  G_PULL_DOWN_DISTANCE = 60;//下拉刷新下拉距离大于 60 时触发下拉刷新
 
 const _onHeaderRefreshing = () => {
   setTimeout(() => {
@@ -92,6 +91,36 @@ class HeaderRefresh extends Component {
 
   render() {
     return this.props.renderHeaderRefresh(this.state.gestureStatus)
+  }
+}
+
+class FooterInfinite extends Component {
+  static setGestureStatus = (gestureStatus, callback) => null
+
+  static defaultProps = {
+    renderFooterInfinite: () => null
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      gestureStatus: G_STATUS_NONE,
+    }
+    FooterInfinite.setGestureStatus = this._setGestureStatus
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextState.gestureStatus !== this.state.gestureStatus
+  }
+
+  _setGestureStatus = (gestureStatus, callback) => {
+    if (gestureStatus !== this.state.gestureStatus) {
+      this.setState({gestureStatus}, () => callback instanceof Function && callback())
+    }
+  }
+
+  render() {
+    return this.props.renderFooterInfinite(this.state.gestureStatus)
   }
 }
 
@@ -167,7 +196,7 @@ class MyScrollComponent extends Component {
     else if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
       this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE - y}]}})
     }
-    else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+    else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_HEADER_REFRESHING) {
       this._headerRefresh.setNativeProps({style: {transform: [{translateY: 0}]}})
     }
   }
@@ -184,20 +213,20 @@ class MyScrollComponent extends Component {
     this.state.onDrag = true
 
     let {y} = e.nativeEvent.contentOffset
-    let {startPageY, movePageY} = this.state
+    let {gestureStatus, startPageY, movePageY} = this.state
     if (y <= 0) {
       if (movePageY > startPageY) {
         //下拉
-        this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
-      }
-      else {
-        this._setGestureStatus(G_STATUS_NONE, null, true)
+        if (gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+        }
       }
     }
   }
 
   onScrollEndDrag = (e) => {
     this.state.onDrag = false
+    this.state.startPageY = this.state.movePageY = 0
 
     if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
       this._setGestureStatus(G_STATUS_NONE, null, false)
@@ -219,23 +248,9 @@ class MyScrollComponent extends Component {
   }
 
   render() {
-    if (this.props.enableHeaderRefresh) {
+    if (this.props.enableHeaderRefresh || this.props.enableFooterInfinite) {
       return (
         <View style={Styles.wrap}>
-          <ScrollView
-            {...this.props}
-            ref={ref => this._scrollView = ref}
-            scrollEventThrottle={4}
-            decelerationRate={0.998}
-            onTouchStart={this.onTouchStart}
-            onTouchMove={this.onTouchMove}
-            onScroll={this.onScroll}
-            onScrollBeginDrag={this.onScrollBeginDrag}
-            onScrollEndDrag={this.onScrollEndDrag}
-            onMomentumScrollBegin={this.onMomentumScrollBegin}
-            onMomentumScrollEnd={this.onMomentumScrollEnd}>
-            {this.props.children}
-          </ScrollView>
           <View
             ref={ref => this._headerRefresh = ref}
             onLayout={e => G_PULL_DOWN_DISTANCE = e.nativeEvent.layout.height}
@@ -246,6 +261,33 @@ class MyScrollComponent extends Component {
             }]}>
             <HeaderRefresh {...this.props}/>
           </View>
+          <View
+            ref={ref => this._footerInfinite = ref}
+            onLayout={e => G_PULL_UP_DISTANCE = e.nativeEvent.layout.height}
+            style={[Styles.infinite, {
+              transform: [{
+                translateY: height
+              }]
+            }]}>
+            <FooterInfinite {...this.props}/>
+          </View>
+          <ScrollView
+            {...this.props}
+            ref={ref => this._scrollView = ref}
+            onLayout={(e) => this._scrollViewHeight = e.nativeEvent.layout.height}
+            scrollEventThrottle={4}
+            decelerationRate={0.998}
+            onTouchStart={this.onTouchStart}
+            onTouchMove={this.onTouchMove}
+            onScroll={this.onScroll}
+            onScrollBeginDrag={this.onScrollBeginDrag}
+            onScrollEndDrag={this.onScrollEndDrag}
+            onMomentumScrollBegin={this.onMomentumScrollBegin}
+            onMomentumScrollEnd={this.onMomentumScrollEnd}>
+            <View onLayout={(e) => this._scrollViewContentHeight = e.nativeEvent.layout.height}>
+              {this.props.children}
+            </View>
+          </ScrollView>
         </View>
       )
     }
@@ -262,12 +304,16 @@ export default class RefresherListView extends Component {
     enableHeaderRefresh: PropTypes.bool,
     renderHeaderRefresh: PropTypes.func,
     onHeaderRefreshing: PropTypes.func,
+
+    enableFooterInfinite: PropTypes.bool,
   }
 
   static defaultProps = {
-    enableHeaderRefresh: true,
+    enableHeaderRefresh: false,
     renderHeaderRefresh: _renderHeaderRefresh,
-    onHeaderRefreshing: _onHeaderRefreshing
+    onHeaderRefreshing: _onHeaderRefreshing,
+
+    enableFooterInfinite: false
   }
 
   constructor(props) {
@@ -293,4 +339,9 @@ const Styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
+  infinite: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+  }
 });

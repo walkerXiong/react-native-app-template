@@ -172,7 +172,7 @@ export default class Example extends Component {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{width: Util.size.screen.width, overflow: 'hidden'}}
 
-          enableHeaderRefresh={false}
+          enableHeaderRefresh={true}
           renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
           onHeaderRefreshing={() => {
             clearTimeout(this._timer)
@@ -183,11 +183,8 @@ export default class Example extends Component {
               }, () => {
                 RefresherListView.headerRefreshDone()
               })
-            }, 2000)
-          }}
-
-          enableFooterInfinite={true}
-          renderFooterInfinite={this.renderFooterInfinite}/>
+            }, 10000)
+          }}/>
       </View>
     );
   }
