@@ -96,7 +96,7 @@ class HeaderRefresh extends Component {
 const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
 export default class Example extends Component {
   _timer = -1;
-  data = ['row1', 'row2', 'row3', 'row1', 'row2', 'row3', 'row1', 'row2', 'row3', 'row1', 'row2', 'row3'];
+  data = ['row1', 'row2', 'row3', 'row1', 'row2', 'row3', 'row1',];
 
   constructor(props) {
     super(props);
@@ -186,6 +186,7 @@ export default class Example extends Component {
           dataSource={this.state.dataSource}
           renderRow={this.renderRow}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{width: Util.size.screen.width, overflow: 'hidden'}}
           enableHeaderRefresh={true}
           setHeaderHeight={60}
           renderHeaderRefresh={this.renderHeaderRefresh}
