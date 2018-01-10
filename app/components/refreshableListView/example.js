@@ -146,22 +146,6 @@ export default class Example extends Component {
     );
   };
 
-  renderHeaderRefresh = (gestureStatus) => {
-    window.console.log('xq debug===renderHeaderRefresh===gestureStatus:' + gestureStatus);
-    if (gestureStatus === 4) {
-      clearTimeout(this._timer);
-      this._timer = setTimeout(() => {
-        this.getData(true);
-        this.setState({
-          dataSource: ds.cloneWithRows(this.data)
-        }, () => {
-          RefresherListView.headerRefreshDone();
-        });
-      }, 3000);
-    }
-    return <HeaderRefresh gestureStatus={gestureStatus}/>;
-  };
-
   renderFooterInfinite = (gestureStatus) => {
     window.console.log('xq debug===renderFooterInfinite===gestureStatus:' + gestureStatus);
     if (gestureStatus === 5) {
@@ -187,11 +171,22 @@ export default class Example extends Component {
           renderRow={this.renderRow}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{width: Util.size.screen.width, overflow: 'hidden'}}
-          enableHeaderRefresh={true}
-          setHeaderHeight={60}
-          renderHeaderRefresh={this.renderHeaderRefresh}
+
+          enableHeaderRefresh={false}
+          renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
+          onHeaderRefreshing={() => {
+            clearTimeout(this._timer)
+            this._timer = setTimeout(() => {
+              this.getData(true)
+              this.setState({
+                dataSource: ds.cloneWithRows(this.data)
+              }, () => {
+                RefresherListView.headerRefreshDone()
+              })
+            }, 2000)
+          }}
+
           enableFooterInfinite={true}
-          setFooterHeight={60}
           renderFooterInfinite={this.renderFooterInfinite}/>
       </View>
     );
@@ -334,7 +329,7 @@ const Styles = StyleSheet.create({
   },
   headerRefresh: {
     width: Dimensions.get('window').width,
-    height: 60,
+    height: 100,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center'

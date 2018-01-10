@@ -27,6 +27,12 @@ let
   G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
   G_MAX_PULL_DISTANCE = 70;//下拉刷新最大下拉距离
 
+const _onHeaderRefreshing = () => {
+  setTimeout(() => {
+    RefresherListView.headerRefreshDone();
+  }, 2000)
+}
+
 const _renderHeaderRefresh = (gestureStatus) => {
   switch (gestureStatus) {
     case G_STATUS_PULLING_DOWN:
@@ -44,9 +50,6 @@ const _renderHeaderRefresh = (gestureStatus) => {
       )
       break
     case G_STATUS_HEADER_REFRESHING:
-      setTimeout(() => {
-        RefresherListView.headerRefreshDone();
-      }, 2000)
       return (
         <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
           <Text>{'正在刷新...'}</Text>
@@ -170,17 +173,14 @@ class MyScrollComponent extends Component {
   }
 
   onTouchStart = (e) => {
-    console.log('onTouchStart')
     this.state.startPageY = e.nativeEvent.pageY
   }
 
   onTouchMove = (e) => {
-    console.log('onTouchMove')
     this.state.movePageY = e.nativeEvent.pageY
   }
 
   onScrollBeginDrag = (e) => {
-    console.log('xq debug===onScrollBeginDrag')
     this.state.onDrag = true
 
     let {y} = e.nativeEvent.contentOffset
@@ -197,13 +197,13 @@ class MyScrollComponent extends Component {
   }
 
   onScrollEndDrag = (e) => {
-    console.log('xq debug===onScrollEndDrag')
     this.state.onDrag = false
 
     if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
       this._setGestureStatus(G_STATUS_NONE, null, false)
     }
     else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+      this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
       this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true)
       this._scrollView.scrollTo({x: 0, y: -G_PULL_DOWN_DISTANCE, animated: false})
     }
@@ -211,42 +211,46 @@ class MyScrollComponent extends Component {
 
   onMomentumScrollBegin = () => {
     //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
-    console.log('xq debug===onMomentumScrollBegin')
     this.state.onScrollWithoutDrag = true
   }
 
   onMomentumScrollEnd = (e) => {
-    console.log('xq debug===onMomentumScrollEnd')
     this.state.onScrollWithoutDrag = false
   }
 
   render() {
-    return (
-      <View style={Styles.wrap}>
-        <ScrollView
-          {...this.props}
-          ref={ref => this._scrollView = ref}
-          scrollEventThrottle={4}
-          decelerationRate={0.998}
-          onTouchStart={this.onTouchStart}
-          onTouchMove={this.onTouchMove}
-          onScroll={this.onScroll}
-          onScrollBeginDrag={this.onScrollBeginDrag}
-          onScrollEndDrag={this.onScrollEndDrag}
-          onMomentumScrollBegin={this.onMomentumScrollBegin}
-          onMomentumScrollEnd={this.onMomentumScrollEnd}>
-          {this.props.children}
-        </ScrollView>
-        <View
-          ref={ref => this._headerRefresh = ref}
-          style={[Styles.refresh, {
-            transform: [{
-              translateY: -G_PULL_DOWN_DISTANCE
-            }]
-          }]}>
-          <HeaderRefresh {...this.props}/>
+    if (this.props.enableHeaderRefresh) {
+      return (
+        <View style={Styles.wrap}>
+          <ScrollView
+            {...this.props}
+            ref={ref => this._scrollView = ref}
+            scrollEventThrottle={4}
+            decelerationRate={0.998}
+            onTouchStart={this.onTouchStart}
+            onTouchMove={this.onTouchMove}
+            onScroll={this.onScroll}
+            onScrollBeginDrag={this.onScrollBeginDrag}
+            onScrollEndDrag={this.onScrollEndDrag}
+            onMomentumScrollBegin={this.onMomentumScrollBegin}
+            onMomentumScrollEnd={this.onMomentumScrollEnd}>
+            {this.props.children}
+          </ScrollView>
+          <View
+            ref={ref => this._headerRefresh = ref}
+            onLayout={e => G_PULL_DOWN_DISTANCE = e.nativeEvent.layout.height}
+            style={[Styles.refresh, {
+              transform: [{
+                translateY: -height
+              }]
+            }]}>
+            <HeaderRefresh {...this.props}/>
+          </View>
         </View>
-      </View>
+      )
+    }
+    return (
+      <ScrollView {...this.props}/>
     )
   }
 }
@@ -257,18 +261,17 @@ export default class RefresherListView extends Component {
   static propTypes = {
     enableHeaderRefresh: PropTypes.bool,
     renderHeaderRefresh: PropTypes.func,
-    setHeaderHeight: PropTypes.number,
+    onHeaderRefreshing: PropTypes.func,
   }
 
   static defaultProps = {
     enableHeaderRefresh: true,
     renderHeaderRefresh: _renderHeaderRefresh,
-    setHeaderHeight: G_PULL_DOWN_DISTANCE,
+    onHeaderRefreshing: _onHeaderRefreshing
   }
 
   constructor(props) {
     super(props)
-    G_PULL_DOWN_DISTANCE = props.setHeaderHeight
   }
 
   render() {
