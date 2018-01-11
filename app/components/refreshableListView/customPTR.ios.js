@@ -204,6 +204,7 @@ class MyScrollComponent extends Component {
   onScroll = (e) => {
     let {y} = e.nativeEvent.contentOffset
     let {gestureStatus, onDrag, onScrollWithoutDrag, dragDirection} = this.state
+    let _maxOffsetY = this._scrollViewContentHeight - this._scrollViewHeight
 
     //下拉
     if (dragDirection === 1) {
@@ -253,8 +254,6 @@ class MyScrollComponent extends Component {
     }
     //上拉
     else if (dragDirection === -1) {
-      let _maxOffsetY = this._scrollViewContentHeight - this._scrollViewHeight
-
       if (gestureStatus === G_STATUS_NONE) {
         if (onDrag) {
           //开始上拉
@@ -297,6 +296,38 @@ class MyScrollComponent extends Component {
       }
       else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_FOOTER_REFRESHING) {
         this._footerInfinite.setNativeProps({style: {transform: [{translateY: 0}]}})
+      }
+    }
+    else {
+      if (gestureStatus === G_STATUS_NONE) {
+        if (onDrag) {
+          //开始下拉
+          if (y <= 0) {
+            this.state.dragDirection = 1
+            this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+          }
+          //开始上拉
+          else if (y >= _maxOffsetY) {
+            this.state.dragDirection = -1
+            this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+          }
+        }
+        else {
+          if (onScrollWithoutDrag) {
+            //当前状态为正在惯性滚动
+          }
+          else {
+            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
+            if (y === 0) {
+              //刷新完毕归位
+              this._setGestureStatus(G_STATUS_NONE, null, true, true)
+            }
+            else if (y <= _maxOffsetY) {
+              //加载完毕归位
+              this._setGestureStatus(G_STATUS_NONE, null, true, false)
+            }
+          }
+        }
       }
     }
   }
