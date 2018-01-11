@@ -45,10 +45,10 @@ class FooterInfinite extends Component {
       <View style={Styles.footerInfinite}>
         {gestureStatus === 5 ?
           <ActivityIndicator
-            size={'large'}
+            size={'small'}
             animating={true}
             color={'#75c5fe'}
-            style={{marginRight: 20}}/> : null}
+            style={{marginRight: 10}}/> : null}
         <Text style={Styles.refreshFont}>{_refreshFont}</Text>
       </View>
     );
@@ -146,22 +146,6 @@ export default class Example extends Component {
     );
   };
 
-  renderFooterInfinite = (gestureStatus) => {
-    window.console.log('xq debug===renderFooterInfinite===gestureStatus:' + gestureStatus);
-    if (gestureStatus === 5) {
-      clearTimeout(this._timer);
-      this._timer = setTimeout(() => {
-        this.getData();
-        this.setState({
-          dataSource: ds.cloneWithRows(this.data)
-        }, () => {
-          RefresherListView.footerInfiniteDone();
-        });
-      }, 1000);
-    }
-    return <FooterInfinite gestureStatus={gestureStatus}/>
-  };
-
   render() {
     return (
       <View style={Styles.wrap}>
@@ -184,7 +168,22 @@ export default class Example extends Component {
                 RefresherListView.headerRefreshDone()
               })
             }, 10000)
-          }}/>
+          }}
+
+          enableFooterInfinite={true}
+          renderFooterInfinite={(gestureStatus) => <FooterInfinite gestureStatus={gestureStatus}/>}
+          onFooterInfiniting={() => {
+            clearTimeout(this._timer)
+            this._timer = setTimeout(() => {
+              this.getData()
+              this.setState({
+                dataSource: ds.cloneWithRows(this.data)
+              }, () => {
+                RefresherListView.footerInfiniteDone()
+              })
+            }, 1000)
+          }}
+        />
       </View>
     );
   }

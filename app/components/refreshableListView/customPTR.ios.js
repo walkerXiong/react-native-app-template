@@ -430,28 +430,29 @@ class MyScrollComponent extends Component {
   }
 
   render() {
-    if (this.props.enableHeaderRefresh || this.props.enableFooterInfinite) {
+    let {enableHeaderRefresh, enableFooterInfinite} = this.props
+    if (enableHeaderRefresh || enableFooterInfinite) {
       return (
         <View style={Styles.wrap}>
           <View
             ref={ref => this._headerRefresh = ref}
-            onLayout={e => G_PULL_DOWN_DISTANCE = e.nativeEvent.layout.height}
+            onLayout={e => G_PULL_DOWN_DISTANCE = enableHeaderRefresh ? e.nativeEvent.layout.height : height}
             style={[Styles.refresh, {
               transform: [{
                 translateY: -height
               }]
             }]}>
-            <HeaderRefresh {...this.props}/>
+            {enableHeaderRefresh ? <HeaderRefresh {...this.props}/> : null}
           </View>
           <View
             ref={ref => this._footerInfinite = ref}
-            onLayout={e => G_PULL_UP_DISTANCE = e.nativeEvent.layout.height}
+            onLayout={e => G_PULL_UP_DISTANCE = enableFooterInfinite ? e.nativeEvent.layout.height : height}
             style={[Styles.infinite, {
               transform: [{
                 translateY: height
               }]
             }]}>
-            <FooterInfinite {...this.props}/>
+            {enableFooterInfinite ? <FooterInfinite {...this.props}/> : null}
           </View>
           <ScrollView
             {...this.props}
