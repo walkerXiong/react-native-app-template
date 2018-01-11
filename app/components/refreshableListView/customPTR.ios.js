@@ -94,6 +94,44 @@ class HeaderRefresh extends Component {
   }
 }
 
+const _onFooterInfiniting = () => {
+  setTimeout(() => {
+    RefresherListView.footerInfiniteDone()
+  }, 2000)
+}
+
+const _renderFooterInfinite = (gestureStatus) => {
+  switch (gestureStatus) {
+    case G_STATUS_PULLING_UP:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'上拉即可加载更多...'}</Text>
+        </View>
+      )
+      break
+    case G_STATUS_RELEASE_TO_REFRESH:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'松开即可加载更多...'}</Text>
+        </View>
+      )
+      break
+    case G_STATUS_FOOTER_REFRESHING:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'正在加载...'}</Text>
+        </View>
+      )
+      break;
+    default:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'上拉即可加载更多...'}</Text>
+        </View>
+      )
+  }
+}
+
 class FooterInfinite extends Component {
   static setGestureStatus = (gestureStatus, callback) => null
 
@@ -126,6 +164,7 @@ class FooterInfinite extends Component {
 
 class MyScrollComponent extends Component {
   static headerRefreshDone = () => null
+  static footerInfiniteDone = () => null
 
   constructor(props) {
     super(props)
@@ -139,65 +178,126 @@ class MyScrollComponent extends Component {
 
       startPageY: 0,
       movePageY: 0,
+      dragDirection: 0,//-1上拉 0无 1下拉
     }
     MyScrollComponent.headerRefreshDone = this._headerRefreshDone
+    MyScrollComponent.footerInfiniteDone = this._footerInfiniteDone
   }
 
   _headerRefreshDone = () => {
-    this._setGestureStatus(G_STATUS_NONE, null, false)
+    this._setGestureStatus(G_STATUS_NONE, null, false, true)
     this._scrollView.scrollTo({x: 0, y: 0, animated: true})
   }
 
-  _setGestureStatus = (status, callback, refresh) => {
+  _footerInfiniteDone = () => {
+    this._setGestureStatus(G_STATUS_NONE, null, false, false)
+    this._scrollView.scrollToEnd()
+  }
+
+  _setGestureStatus = (status, callback, refresh, updateHeader) => {
     this.state.gestureStatus = status
-    refresh && HeaderRefresh.setGestureStatus(status, callback)
+    if (refresh) {
+      updateHeader ? HeaderRefresh.setGestureStatus(status, callback) : FooterInfinite.setGestureStatus(status, callback)
+    }
   }
 
   onScroll = (e) => {
     let {y} = e.nativeEvent.contentOffset
-    let {gestureStatus, onDrag, onScrollWithoutDrag} = this.state
-    if (gestureStatus === G_STATUS_NONE) {
-      if (onDrag) {
-        //开始下拉
-        if (y <= 0) {
-          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
-        }
-      }
-      else {
-        if (onScrollWithoutDrag) {
-          //当前状态为正在惯性滚动
+    let {gestureStatus, onDrag, onScrollWithoutDrag, dragDirection} = this.state
+
+    //下拉
+    if (dragDirection === 1) {
+      if (gestureStatus === G_STATUS_NONE) {
+        if (onDrag) {
+          //开始下拉
+          if (y <= 0) {
+            this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+          }
         }
         else {
-          //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
-          if (y === 0) {
-            //刷新完毕归位
-            this._setGestureStatus(G_STATUS_NONE, null, true)
+          if (onScrollWithoutDrag) {
+            //当前状态为正在惯性滚动
+          }
+          else {
+            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
+            if (y === 0) {
+              //刷新完毕归位
+              this._setGestureStatus(G_STATUS_NONE, null, true, true)
+            }
           }
         }
       }
-    }
-    else if (gestureStatus === G_STATUS_PULLING_DOWN) {
-      //下拉刷新
-      if (y <= 0 && Math.abs(y) >= G_PULL_DOWN_DISTANCE) {
-        this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true)
+      else if (gestureStatus === G_STATUS_PULLING_DOWN) {
+        //下拉刷新
+        if (y <= 0 && Math.abs(y) >= G_PULL_DOWN_DISTANCE) {
+          this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, true)
+        }
       }
-    }
-    else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-      //释放刷新
-      if (y <= 0 && Math.abs(y) < G_PULL_DOWN_DISTANCE) {
-        this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+        //释放刷新
+        if (y <= 0 && Math.abs(y) < G_PULL_DOWN_DISTANCE) {
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+        }
       }
-    }
 
-    //位移刷新头 刷新头位移固定位置之后，不再移动
-    if (this.state.gestureStatus === G_STATUS_NONE) {
-      this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE}]}})
+      //位移刷新头 刷新头位移固定位置之后，不再移动
+      if (this.state.gestureStatus === G_STATUS_NONE) {
+        this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE}]}})
+      }
+      else if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
+        this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE - y}]}})
+      }
+      else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_HEADER_REFRESHING) {
+        this._headerRefresh.setNativeProps({style: {transform: [{translateY: 0}]}})
+      }
     }
-    else if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
-      this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE - y}]}})
-    }
-    else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_HEADER_REFRESHING) {
-      this._headerRefresh.setNativeProps({style: {transform: [{translateY: 0}]}})
+    //上拉
+    else if (dragDirection === -1) {
+      let _maxOffsetY = this._scrollViewContentHeight - this._scrollViewHeight
+
+      if (gestureStatus === G_STATUS_NONE) {
+        if (onDrag) {
+          //开始上拉
+          if (y >= _maxOffsetY) {
+            this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+          }
+        }
+        else {
+          if (onScrollWithoutDrag) {
+            //当前状态为正在惯性滚动
+          }
+          else {
+            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
+            if (y <= _maxOffsetY) {
+              //刷新完毕归位
+              this._setGestureStatus(G_STATUS_NONE, null, true, false)
+            }
+          }
+        }
+      }
+      else if (gestureStatus === G_STATUS_PULLING_UP) {
+        //上拉加载
+        if (y - _maxOffsetY >= G_PULL_UP_DISTANCE) {
+          this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, false)
+        }
+      }
+      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+        //释放刷新
+        if (y - _maxOffsetY < G_PULL_UP_DISTANCE) {
+          this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+        }
+      }
+
+      //位移加载头 加载头位移固定位置之后，不再移动
+      if (this.state.gestureStatus === G_STATUS_NONE) {
+        this._footerInfinite.setNativeProps({style: {transform: [{translateY: G_PULL_UP_DISTANCE}]}})
+      }
+      else if (this.state.gestureStatus === G_STATUS_PULLING_UP) {
+        this._footerInfinite.setNativeProps({style: {transform: [{translateY: G_PULL_UP_DISTANCE - (y - (this._scrollViewContentHeight - this._scrollViewHeight))}]}})
+      }
+      else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_FOOTER_REFRESHING) {
+        this._footerInfinite.setNativeProps({style: {transform: [{translateY: 0}]}})
+      }
     }
   }
 
@@ -211,14 +311,46 @@ class MyScrollComponent extends Component {
 
   onScrollBeginDrag = (e) => {
     this.state.onDrag = true
+    this.state.dragDirection = 0
 
     let {y} = e.nativeEvent.contentOffset
     let {gestureStatus, startPageY, movePageY} = this.state
-    if (y <= 0) {
+    if (this._scrollViewHeight >= this._scrollViewContentHeight) {
+      //不足一屏
       if (movePageY > startPageY) {
         //下拉
+        this.state.dragDirection = 1
         if (gestureStatus !== G_STATUS_HEADER_REFRESHING) {
-          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true)
+          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+        }
+      }
+      else {
+        //上拉
+        this.state.dragDirection = -1
+        if (gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+          this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+        }
+      }
+    }
+    else {
+      if (y <= 0) {
+        //到顶部
+        if (movePageY > startPageY) {
+          //下拉
+          this.state.dragDirection = 1
+          if (gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+            this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+          }
+        }
+      }
+      else if (y >= this._scrollViewContentHeight - this._scrollViewHeight) {
+        //到底部
+        if (movePageY < startPageY) {
+          //上拉
+          this.state.dragDirection = -1
+          if (gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+            this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+          }
         }
       }
     }
@@ -228,13 +360,32 @@ class MyScrollComponent extends Component {
     this.state.onDrag = false
     this.state.startPageY = this.state.movePageY = 0
 
-    if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
-      this._setGestureStatus(G_STATUS_NONE, null, false)
+    let {gestureStatus, dragDirection} = this.state
+    //下拉
+    if (dragDirection === 1) {
+      if (gestureStatus === G_STATUS_PULLING_DOWN) {
+        this._setGestureStatus(G_STATUS_NONE, null, false, true)
+      }
+      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+        this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
+        this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
+        this._scrollView.scrollTo({x: 0, y: -G_PULL_DOWN_DISTANCE, animated: false})
+      }
     }
-    else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-      this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
-      this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true)
-      this._scrollView.scrollTo({x: 0, y: -G_PULL_DOWN_DISTANCE, animated: false})
+    //上拉
+    else if (dragDirection === -1) {
+      if (gestureStatus === G_STATUS_PULLING_UP) {
+        this._setGestureStatus(G_STATUS_NONE, null, false, false)
+      }
+      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+        this.props.onFooterInfiniting instanceof Function && this.props.onFooterInfiniting()
+        this._setGestureStatus(G_STATUS_FOOTER_REFRESHING, null, true, false)
+        this._scrollView.scrollTo({
+          x: 0,
+          y: this._scrollViewContentHeight - this._scrollViewHeight + G_PULL_UP_DISTANCE,
+          animated: false
+        })
+      }
     }
   }
 
@@ -299,6 +450,7 @@ class MyScrollComponent extends Component {
 
 export default class RefresherListView extends Component {
   static headerRefreshDone = () => MyScrollComponent.headerRefreshDone()
+  static footerInfiniteDone = () => MyScrollComponent.footerInfiniteDone()
 
   static propTypes = {
     enableHeaderRefresh: PropTypes.bool,
@@ -306,6 +458,8 @@ export default class RefresherListView extends Component {
     onHeaderRefreshing: PropTypes.func,
 
     enableFooterInfinite: PropTypes.bool,
+    renderFooterInfinite: PropTypes.func,
+    onFooterInfiniting: PropTypes.func,
   }
 
   static defaultProps = {
@@ -313,7 +467,9 @@ export default class RefresherListView extends Component {
     renderHeaderRefresh: _renderHeaderRefresh,
     onHeaderRefreshing: _onHeaderRefreshing,
 
-    enableFooterInfinite: false
+    enableFooterInfinite: false,
+    renderFooterInfinite: _renderFooterInfinite,
+    onFooterInfiniting: _onFooterInfiniting,
   }
 
   constructor(props) {
