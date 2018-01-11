@@ -329,7 +329,7 @@ export default class PTRScrollComponent extends Component {
             this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
           }
           //开始上拉
-          else if (y >= _maxOffsetY) {
+          else if (y >= _maxOffsetY && layoutMeasurement.height < contentSize.height) {
             this.state.dragDirection = -1
             this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
           }
@@ -379,11 +379,11 @@ export default class PTRScrollComponent extends Component {
         }
       }
       else {
-        //上拉
-        this.state.dragDirection = -1
-        if (gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
-          this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
-        }
+        // 不足一屏不允许上拉
+        // this.state.dragDirection = -1
+        // if (gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+        //   this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+        // }
       }
     }
     else {
@@ -479,7 +479,7 @@ export default class PTRScrollComponent extends Component {
         <FlatList
           {...this.props}
           ref={ref => this._flatList = ref}
-          scrollEventThrottle={16}
+          scrollEventThrottle={4}
           decelerationRate={0.998}
           onTouchStart={this.onTouchStart}
           onTouchMove={this.onTouchMove}

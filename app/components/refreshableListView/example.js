@@ -104,13 +104,14 @@ export default class Example extends Component {
     this.state = {
       dataSource: ds.cloneWithRows(this.data),
     }
-    this.getData(true)
+    this.getData()
   }
 
   getData(init) {
-    let total = 15;
+    let total = 5;
     if (init) {
       this.data = [];
+      total = Math.ceil(Math.random() * 20)
     }
     for (let i = 0; i < total; i++) {
       this.data.push('row' + Math.ceil(Math.random() * total));
@@ -151,7 +152,7 @@ export default class Example extends Component {
     return <View style={[Styles.separator, {backgroundColor: highlighted ? '#FDFE3C' : '#feafea'}]}/>
   }
 
-  renderItem = ({item, separators}) => {
+  renderItem = ({item, index, separators}) => {
     return (
       <TouchableHighlight
         onPress={() => console.log(item + ' pressed!!!')}
@@ -160,7 +161,7 @@ export default class Example extends Component {
         onShowUnderlay={separators.highlight}
         onHideUnderlay={separators.unhighlight}
         style={Styles.flatListItem}>
-        <Text style={Styles.font_3}>{item}</Text>
+        <Text style={Styles.font_3}>{item + ':' + index}</Text>
       </TouchableHighlight>
     )
   }
