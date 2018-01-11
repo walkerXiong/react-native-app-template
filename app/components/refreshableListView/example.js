@@ -13,6 +13,7 @@ import {
   ActivityIndicator
 }  from 'react-native';
 import RefresherListView from './customPTR';
+import RefresherFlatList from './PTRFlatList';
 import LinearGradient from 'react-native-linear-gradient';
 import HBStyle from '../../styles/standard';
 import Util from '../../utility/util';
@@ -96,23 +97,23 @@ class HeaderRefresh extends Component {
 const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
 export default class Example extends Component {
   _timer = -1;
-  data = ['row1', 'row2', 'row3', 'row1', 'row2', 'row3', 'row1',];
+  data = [];
 
   constructor(props) {
     super(props);
     this.state = {
       dataSource: ds.cloneWithRows(this.data),
     }
+    this.getData(true)
   }
 
   getData(init) {
     let total = 15;
     if (init) {
       this.data = [];
-      total = Math.ceil(Math.random() * 100);
     }
     for (let i = 0; i < total; i++) {
-      this.data.push('row' + Math.ceil(Math.random() * 5));
+      this.data.push('row' + Math.ceil(Math.random() * total));
     }
   }
 
@@ -146,15 +147,74 @@ export default class Example extends Component {
     );
   };
 
+  ItemSeparatorComponent = ({highlighted}) => {
+    return <View style={[Styles.separator, {backgroundColor: highlighted ? '#FDFE3C' : '#feafea'}]}/>
+  }
+
+  renderItem = ({item, separators}) => {
+    return (
+      <TouchableHighlight
+        onPress={() => console.log(item + ' pressed!!!')}
+        activeOpacity={1}
+        underlayColor={'#e8e8e8'}
+        onShowUnderlay={separators.highlight}
+        onHideUnderlay={separators.unhighlight}
+        style={Styles.flatListItem}>
+        <Text style={Styles.font_3}>{item}</Text>
+      </TouchableHighlight>
+    )
+  }
+
   render() {
+    // return (
+    //   <View style={Styles.wrap}>
+    //     <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
+    //     <RefresherListView
+    //       dataSource={this.state.dataSource}
+    //       renderRow={this.renderRow}
+    //       showsVerticalScrollIndicator={false}
+    //       contentContainerStyle={{width: Util.size.screen.width, overflow: 'hidden'}}
+    //
+    //       enableHeaderRefresh={true}
+    //       renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
+    //       onHeaderRefreshing={() => {
+    //         clearTimeout(this._timer)
+    //         this._timer = setTimeout(() => {
+    //           this.getData(true)
+    //           this.setState({
+    //             dataSource: ds.cloneWithRows(this.data)
+    //           }, () => {
+    //             RefresherListView.headerRefreshDone()
+    //           })
+    //         }, 10000)
+    //       }}
+    //
+    //       enableFooterInfinite={true}
+    //       renderFooterInfinite={(gestureStatus) => <FooterInfinite gestureStatus={gestureStatus}/>}
+    //       onFooterInfiniting={() => {
+    //         clearTimeout(this._timer)
+    //         this._timer = setTimeout(() => {
+    //           this.getData()
+    //           this.setState({
+    //             dataSource: ds.cloneWithRows(this.data)
+    //           }, () => {
+    //             RefresherListView.footerInfiniteDone()
+    //           })
+    //         }, 1000)
+    //       }}
+    //     />
+    //   </View>
+    // )
     return (
       <View style={Styles.wrap}>
         <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
-        <RefresherListView
-          dataSource={this.state.dataSource}
-          renderRow={this.renderRow}
+        <RefresherFlatList
+          data={this.data}
+          ItemSeparatorComponent={this.ItemSeparatorComponent}
+          renderItem={this.renderItem}
+          keyExtractor={(item, index) => ('flatPTR_' + index)}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{width: Util.size.screen.width, overflow: 'hidden'}}
+          contentContainerStyle={{backgroundColor: '#ffffff'}}
 
           enableHeaderRefresh={true}
           renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
@@ -165,9 +225,9 @@ export default class Example extends Component {
               this.setState({
                 dataSource: ds.cloneWithRows(this.data)
               }, () => {
-                RefresherListView.headerRefreshDone()
+                RefresherFlatList.headerRefreshDone()
               })
-            }, 10000)
+            }, 5000)
           }}
 
           enableFooterInfinite={true}
@@ -179,13 +239,13 @@ export default class Example extends Component {
               this.setState({
                 dataSource: ds.cloneWithRows(this.data)
               }, () => {
-                RefresherListView.footerInfiniteDone()
+                RefresherFlatList.footerInfiniteDone()
               })
             }, 1000)
           }}
         />
       </View>
-    );
+    )
   }
 }
 
@@ -340,5 +400,16 @@ const Styles = StyleSheet.create({
   refreshFont: {
     fontSize: 16,
     color: '#b84f35'
+  },
+  separator: {
+    width: '100%',
+    height: 0.5,
+    marginLeft: 10
+  },
+  flatListItem: {
+    width: Dimensions.get('window').width,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });
