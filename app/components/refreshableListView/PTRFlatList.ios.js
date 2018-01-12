@@ -264,10 +264,7 @@ export default class PTRScrollComponent extends Component {
       }
 
       //位移刷新头 刷新头位移固定位置之后，不再移动
-      if (this.state.gestureStatus === G_STATUS_NONE) {
-        this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE}]}})
-      }
-      else if (this.state.gestureStatus === G_STATUS_PULLING_DOWN) {
+      if (this.state.gestureStatus === G_STATUS_PULLING_DOWN || this.state.gestureStatus === G_STATUS_NONE) {
         this._headerRefresh.setNativeProps({style: {transform: [{translateY: -G_PULL_DOWN_DISTANCE - y}]}})
       }
       else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_HEADER_REFRESHING) {
@@ -310,10 +307,7 @@ export default class PTRScrollComponent extends Component {
       }
 
       //位移加载头 加载头位移固定位置之后，不再移动
-      if (this.state.gestureStatus === G_STATUS_NONE) {
-        this._footerInfinite.setNativeProps({style: {transform: [{translateY: G_PULL_UP_DISTANCE}]}})
-      }
-      else if (this.state.gestureStatus === G_STATUS_PULLING_UP) {
+      if (this.state.gestureStatus === G_STATUS_PULLING_UP || this.state.gestureStatus === G_STATUS_NONE) {
         this._footerInfinite.setNativeProps({style: {transform: [{translateY: G_PULL_UP_DISTANCE - (y - (contentSize.height - layoutMeasurement.height))}]}})
       }
       else if (this.state.gestureStatus === G_STATUS_RELEASE_TO_REFRESH || this.state.gestureStatus === G_STATUS_FOOTER_REFRESHING) {
