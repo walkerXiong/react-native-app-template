@@ -217,6 +217,8 @@ export default class Example extends Component {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{backgroundColor: '#ffffff'}}
 
+          scrollComponent={'FlatList'}
+
           enableHeaderRefresh={true}
           renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
           onHeaderRefreshing={() => {
@@ -409,7 +411,7 @@ const Styles = StyleSheet.create({
   },
   flatListItem: {
     width: Dimensions.get('window').width,
-    height: 50,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center'
   }

@@ -6,12 +6,13 @@ import React, {Component, PropTypes} from 'react'
 import {
   View,
   StyleSheet,
-  ListView,
   Dimensions,
   Animated,
   Text,
   ScrollView,
-  FlatList
+  ListView,
+  FlatList,
+  VirtualizedList
 } from 'react-native'
 
 const {width, height} = Dimensions.get('window')
@@ -168,6 +169,8 @@ export default class PTRScrollComponent extends Component {
   static footerInfiniteDone = () => null
 
   static propTypes = {
+    scrollComponent: PropTypes.oneOf(['ScrollView', 'ListView', 'FlatList', 'VirtualizedList']).isRequired,
+
     enableHeaderRefresh: PropTypes.bool,
     renderHeaderRefresh: PropTypes.func,
     onHeaderRefreshing: PropTypes.func,
@@ -178,6 +181,8 @@ export default class PTRScrollComponent extends Component {
   }
 
   static defaultProps = {
+    scrollComponent: 'FlatList',
+
     enableHeaderRefresh: false,
     renderHeaderRefresh: _renderHeaderRefresh,
     onHeaderRefreshing: _onHeaderRefreshing,
@@ -207,7 +212,7 @@ export default class PTRScrollComponent extends Component {
 
   _headerRefreshDone = () => {
     this._setGestureStatus(G_STATUS_NONE, null, false, true)
-    this._flatList.scrollToOffset({offset: 0, animated: true})
+    this._scrollToPos(0, true)
   }
 
   _footerInfiniteDone = () => {
@@ -219,6 +224,20 @@ export default class PTRScrollComponent extends Component {
     this.state.gestureStatus = status
     if (refresh) {
       updateHeader ? HeaderRefresh.setGestureStatus(status, callback) : FooterInfinite.setGestureStatus(status, callback)
+    }
+  }
+
+  _scrollToPos = (offset, animated) => {
+    let {scrollComponent} = this.props
+    switch (scrollComponent) {
+      case 'ScrollView':
+      case 'ListView':
+        this._flatList.scrollTo({x: 0, y: offset, animated})
+        break
+      case 'FlatList':
+      case 'VirtualizedList':
+        this._flatList.scrollToOffset({offset, animated})
+        break
     }
   }
 
@@ -346,14 +365,18 @@ export default class PTRScrollComponent extends Component {
         }
       }
     }
+
+    this.props.onScroll instanceof Function && this.props.onScroll(e)
   }
 
   onTouchStart = (e) => {
     this.state.startPageY = e.nativeEvent.pageY
+    this.props.onTouchStart instanceof Function && this.props.onTouchStart(e)
   }
 
   onTouchMove = (e) => {
     this.state.movePageY = e.nativeEvent.pageY
+    this.props.onTouchMove instanceof Function && this.props.onTouchMove(e)
   }
 
   onScrollBeginDrag = (e) => {
@@ -402,6 +425,8 @@ export default class PTRScrollComponent extends Component {
         }
       }
     }
+
+    this.props.onScrollBeginDrag instanceof Function && this.props.onScrollBeginDrag(e)
   }
 
   onScrollEndDrag = (e) => {
@@ -418,7 +443,7 @@ export default class PTRScrollComponent extends Component {
       else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
         this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
         this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
-        this._flatList.scrollToOffset({offset: -G_PULL_DOWN_DISTANCE, animated: false})
+        this._scrollToPos(-G_PULL_DOWN_DISTANCE, false)
       }
     }
     //上拉
@@ -429,25 +454,44 @@ export default class PTRScrollComponent extends Component {
       else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
         this.props.onFooterInfiniting instanceof Function && this.props.onFooterInfiniting()
         this._setGestureStatus(G_STATUS_FOOTER_REFRESHING, null, true, false)
-        this._flatList.scrollToOffset({
-          offset: contentSize.height - layoutMeasurement.height + G_PULL_UP_DISTANCE,
-          animated: false
-        })
+        this._scrollToPos(contentSize.height - layoutMeasurement.height + G_PULL_UP_DISTANCE, false)
       }
     }
+
+    this.props.onScrollEndDrag instanceof Function && this.props.onScrollEndDrag(e)
   }
 
-  onMomentumScrollBegin = () => {
+  onMomentumScrollBegin = (e) => {
     //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
     this.state.onScrollWithoutDrag = true
+    this.props.onMomentumScrollBegin instanceof Function && this.props.onMomentumScrollBegin(e)
   }
 
   onMomentumScrollEnd = (e) => {
     this.state.onScrollWithoutDrag = false
+    this.props.onMomentumScrollEnd instanceof Function && this.props.onMomentumScrollEnd(e)
   }
 
   render() {
-    let {enableHeaderRefresh, enableFooterInfinite} = this.props
+    let {scrollComponent, enableHeaderRefresh, enableFooterInfinite} = this.props
+    let ScrollComponent = null
+    switch (scrollComponent) {
+      case 'ScrollView':
+        ScrollComponent = <ScrollView {...this.props}/>
+        break
+      case 'ListView':
+        ScrollComponent = <ListView {...this.props}/>
+        break
+      case 'FlatList':
+        ScrollComponent = <FlatList {...this.props}/>
+        break
+      case 'VirtualizedList':
+        ScrollComponent = <VirtualizedList {...this.props}/>
+        break
+      default:
+        ScrollComponent = <FlatList {...this.props}/>
+        break
+    }
     return (
       <View style={Styles.wrap}>
         <View
@@ -470,18 +514,22 @@ export default class PTRScrollComponent extends Component {
           }]}>
           {enableFooterInfinite ? <FooterInfinite {...this.props}/> : null}
         </View>
-        <FlatList
-          {...this.props}
-          ref={ref => this._flatList = ref}
-          scrollEventThrottle={4}
-          decelerationRate={0.998}
-          onTouchStart={this.onTouchStart}
-          onTouchMove={this.onTouchMove}
-          onScroll={this.onScroll}
-          onScrollBeginDrag={this.onScrollBeginDrag}
-          onScrollEndDrag={this.onScrollEndDrag}
-          onMomentumScrollBegin={this.onMomentumScrollBegin}
-          onMomentumScrollEnd={this.onMomentumScrollEnd}/>
+        {
+          React.cloneElement(ScrollComponent, {
+            ref: ref => {
+              this._flatList = ref
+              this.props.getRef instanceof Function && this.props.getRef(ref)
+            },
+            scrollEventThrottle: this.props.scrollEventThrottle || 4,
+            onTouchStart: this.onTouchStart,
+            onTouchMove: this.onTouchMove,
+            onScroll: this.onScroll,
+            onScrollBeginDrag: this.onScrollBeginDrag,
+            onScrollEndDrag: this.onScrollEndDrag,
+            onMomentumScrollBegin: this.onMomentumScrollBegin,
+            onMomentumScrollEnd: this.onMomentumScrollEnd
+          }, this.props.children)
+        }
       </View>
     )
   }
