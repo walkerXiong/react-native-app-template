@@ -12,7 +12,6 @@ import {
   TouchableHighlight,
   ActivityIndicator
 }  from 'react-native';
-import RefresherListView from './customPTR';
 import RefresherFlatList from './PTRScrollList';
 import LinearGradient from 'react-native-linear-gradient';
 import HBStyle from '../../styles/standard';
