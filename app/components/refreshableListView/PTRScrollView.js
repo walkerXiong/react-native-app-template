@@ -6,13 +6,11 @@ import React, {Component, PropTypes} from 'react'
 import {
   View,
   StyleSheet,
+  ListView,
   Dimensions,
   Animated,
   Text,
   ScrollView,
-  ListView,
-  FlatList,
-  VirtualizedList
 } from 'react-native'
 
 const {width, height} = Dimensions.get('window')
@@ -29,12 +27,6 @@ let
   G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
   G_MAX_PULL_DISTANCE = 70;//下拉刷新最大下拉距离
 
-const _onHeaderRefreshing = () => {
-  setTimeout(() => {
-    RefresherListView.headerRefreshDone();
-  }, 2000)
-}
-
 const _renderHeaderRefresh = (gestureStatus) => {
   switch (gestureStatus) {
     case G_STATUS_PULLING_DOWN:
@@ -42,30 +34,33 @@ const _renderHeaderRefresh = (gestureStatus) => {
         <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
           <Text>{'下拉刷新'}</Text>
         </View>
-      )
-      break
+      );
+      break;
     case G_STATUS_RELEASE_TO_REFRESH:
       return (
         <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
           <Text>{'松开即可刷新'}</Text>
         </View>
-      )
-      break
+      );
+      break;
     case G_STATUS_HEADER_REFRESHING:
+      setTimeout(() => {
+        RefresherListView.headerRefreshDone();
+      }, 2000);
       return (
         <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
           <Text>{'正在刷新...'}</Text>
         </View>
-      )
-      break
+      );
+      break;
     default:
       return (
         <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
           <Text>{'下拉刷新'}</Text>
         </View>
-      )
+      );
   }
-}
+};
 
 class HeaderRefresh extends Component {
   static setGestureStatus = (gestureStatus, callback) => null
@@ -83,13 +78,11 @@ class HeaderRefresh extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return nextState.gestureStatus !== this.state.gestureStatus
+    return nextState.gestureStatus !== this.state.gestureStatus;
   }
 
   _setGestureStatus = (gestureStatus, callback) => {
-    if (gestureStatus !== this.state.gestureStatus) {
-      this.setState({gestureStatus}, () => callback instanceof Function && callback())
-    }
+    this.setState({gestureStatus}, () => callback instanceof Function && callback())
   }
 
   render() {
@@ -97,47 +90,26 @@ class HeaderRefresh extends Component {
   }
 }
 
-const _onFooterInfiniting = () => {
-  setTimeout(() => {
-    RefresherListView.footerInfiniteDone()
-  }, 2000)
-}
-
 const _renderFooterInfinite = (gestureStatus) => {
   switch (gestureStatus) {
     case G_STATUS_PULLING_UP:
-      return (
-        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>{'上拉即可加载更多...'}</Text>
-        </View>
-      )
-      break
+      return <Text>{'上拉即可加载更多...'}</Text>;
+      break;
     case G_STATUS_RELEASE_TO_REFRESH:
-      return (
-        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>{'松开即可加载更多...'}</Text>
-        </View>
-      )
-      break
+      return <Text>{'松开即可加载更多...'}</Text>;
+      break;
     case G_STATUS_FOOTER_REFRESHING:
-      return (
-        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>{'正在加载...'}</Text>
-        </View>
-      )
+      setTimeout(() => {
+        RefresherListView.footerInfiniteDone();
+      }, 2000);
+      return <Text>{'正在加载...'}</Text>;
       break;
     default:
-      return (
-        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>{'上拉即可加载更多...'}</Text>
-        </View>
-      )
+      return <Text>{'上拉即可加载更多...'}</Text>;
   }
-}
+};
 
 class FooterInfinite extends Component {
-  static setGestureStatus = (gestureStatus, callback) => null
-
   static defaultProps = {
     renderFooterInfinite: () => null
   };
@@ -146,54 +118,46 @@ class FooterInfinite extends Component {
     super(props);
     this.state = {
       gestureStatus: G_STATUS_NONE,
-    }
-    FooterInfinite.setGestureStatus = this._setGestureStatus
+      aniTranslateY: new Animated.Value(G_PULL_UP_DISTANCE)
+    };
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return nextState.gestureStatus !== this.state.gestureStatus
+    return nextState.gestureStatus !== this.state.gestureStatus;
   }
 
-  _setGestureStatus = (gestureStatus, callback) => {
-    if (gestureStatus !== this.state.gestureStatus) {
-      this.setState({gestureStatus}, () => callback instanceof Function && callback())
-    }
+  _setGestureStatus(gestureStatus) {
+    this.setState({gestureStatus});
+  }
+
+  _setAniTranslateY(translateY) {
+    this.state.aniTranslateY.setValue(G_PULL_UP_DISTANCE - translateY);
+  }
+
+  _getAniTranslateY() {
+    return this.state.aniTranslateY;
   }
 
   render() {
-    return this.props.renderFooterInfinite(this.state.gestureStatus)
+    let {gestureStatus} = this.state;
+    return (
+      <Animated.View
+        style={[Styles.loadMore, {
+          height: G_PULL_UP_DISTANCE,
+          transform: [{translateY: this.state.aniTranslateY}]
+        }]}>
+        {this.props.renderFooterInfinite(gestureStatus)}
+      </Animated.View>
+    );
   }
 }
 
-export default class PTRScrollComponent extends Component {
+class MyScrollComponent extends Component {
   resetHeaderHeightHandle = -1
 
   static headerRefreshDone = () => null
+
   static footerInfiniteDone = () => null
-
-  static propTypes = {
-    scrollComponent: PropTypes.oneOf(['ScrollView', 'ListView', 'FlatList', 'VirtualizedList']).isRequired,
-
-    enableHeaderRefresh: PropTypes.bool,
-    renderHeaderRefresh: PropTypes.func,
-    onHeaderRefreshing: PropTypes.func,
-
-    enableFooterInfinite: PropTypes.bool,
-    renderFooterInfinite: PropTypes.func,
-    onFooterInfiniting: PropTypes.func,
-  }
-
-  static defaultProps = {
-    scrollComponent: 'FlatList',
-
-    enableHeaderRefresh: false,
-    renderHeaderRefresh: _renderHeaderRefresh,
-    onHeaderRefreshing: _onHeaderRefreshing,
-
-    enableFooterInfinite: false,
-    renderFooterInfinite: _renderFooterInfinite,
-    onFooterInfiniting: _onFooterInfiniting,
-  }
 
   constructor(props) {
     super(props)
@@ -209,8 +173,8 @@ export default class PTRScrollComponent extends Component {
       movePageY: 0,
       isHeaderValid: false
     }
-    PTRScrollComponent.headerRefreshDone = this._headerRefreshDone
-    PTRScrollComponent.footerInfiniteDone = this._footerInfiniteDone
+    MyScrollComponent.headerRefreshDone = this._headerRefreshDone
+    MyScrollComponent.footerInfiniteDone = this._footerInfiniteDone
   }
 
   componentDidMount() {
@@ -391,81 +355,97 @@ export default class PTRScrollComponent extends Component {
   }
 
   render() {
-    let {scrollComponent, enableHeaderRefresh, enableFooterInfinite} = this.props
-    let ScrollComponent = null
-    switch (scrollComponent) {
-      case 'ScrollView':
-        ScrollComponent = <ScrollView {...this.props}/>
-        break
-      case 'ListView':
-        ScrollComponent = <ListView {...this.props}/>
-        break
-      case 'FlatList':
-        ScrollComponent = <FlatList {...this.props}/>
-        break
-      case 'VirtualizedList':
-        ScrollComponent = <VirtualizedList {...this.props}/>
-        break
-      default:
-        ScrollComponent = <FlatList {...this.props}/>
-        break
-    }
     return (
-      <View style={Styles.wrap}>
-        <View
-          ref={ref => this._headerRefresh = ref}
-          onLayout={e => G_PULL_DOWN_DISTANCE = enableHeaderRefresh ? e.nativeEvent.layout.height : height}
-          style={[Styles.refresh, {
-            transform: [{
-              translateY: -height
-            }]
-          }]}>
-          {enableHeaderRefresh ? <HeaderRefresh {...this.props}/> : null}
+      <ScrollView
+        {...this.props}
+        ref={ref => this._scrollView = ref}
+        onTouchStart={this.onTouchStart}
+        onTouchMove={this.onTouchMove}
+        scrollEventThrottle={16}
+        onScroll={this.onScroll}
+        onScrollBeginDrag={this.onScrollBeginDrag}
+        onScrollEndDrag={this.onScrollEndDrag}
+        onMomentumScrollBegin={this.onMomentumScrollBegin}
+        onMomentumScrollEnd={this.onMomentumScrollEnd}>
+        <View ref={ref => this._headerRefreshWrap = ref} style={[Styles.refresh, {height: 0}]}>
+          <HeaderRefresh {...this.props}/>
         </View>
-        <View
-          ref={ref => this._footerInfinite = ref}
-          onLayout={e => G_PULL_UP_DISTANCE = enableFooterInfinite ? e.nativeEvent.layout.height : height}
-          style={[Styles.infinite, {
-            transform: [{
-              translateY: height
-            }]
-          }]}>
-          {enableFooterInfinite ? <FooterInfinite {...this.props}/> : null}
-        </View>
-        {
-          React.cloneElement(ScrollComponent, {
-            ref: ref => {
-              this._scrollInstance = ref
-              this.props.getRef instanceof Function && this.props.getRef(ref)
-            },
-            scrollEventThrottle: this.props.scrollEventThrottle || 4,
-            onTouchStart: this.onTouchStart,
-            onTouchMove: this.onTouchMove,
-            onScroll: this.onScroll,
-            onScrollBeginDrag: this.onScrollBeginDrag,
-            onScrollEndDrag: this.onScrollEndDrag,
-            onMomentumScrollBegin: this.onMomentumScrollBegin,
-            onMomentumScrollEnd: this.onMomentumScrollEnd
-          }, this.props.children)
-        }
-      </View>
+        {this.props.children}
+      </ScrollView>
     )
+  }
+}
+
+export default class RefresherListView extends Component {
+  static headerRefreshDone = () => MyScrollComponent.headerRefreshDone()
+
+  static footerInfiniteDone = () => MyScrollComponent.footerInfiniteDone()
+
+  static propTypes = {
+    enableHeaderRefresh: PropTypes.bool,
+    renderHeaderRefresh: PropTypes.func,
+    setHeaderHeight: PropTypes.number,
+
+    enableFooterInfinite: PropTypes.bool,
+    renderFooterInfinite: PropTypes.func,
+    setFooterHeight: PropTypes.number,
+
+    setMaxPullDistance: PropTypes.number,
+  }
+
+  static defaultProps = {
+    enableHeaderRefresh: true,
+    renderHeaderRefresh: _renderHeaderRefresh,
+    setHeaderHeight: G_PULL_DOWN_DISTANCE,
+
+    enableFooterInfinite: false,
+    renderFooterInfinite: _renderFooterInfinite,
+    setFooterHeight: G_PULL_UP_DISTANCE,
+
+    setMaxPullDistance: G_MAX_PULL_DISTANCE,
+  }
+
+  constructor(props) {
+    super(props)
+    G_PULL_DOWN_DISTANCE = props.setHeaderHeight
+    G_PULL_UP_DISTANCE = props.setFooterHeight
+    G_MAX_PULL_DISTANCE = props.setMaxPullDistance
+  }
+
+  render() {
+    return (
+      <ListView
+        renderScrollComponent={props => <MyScrollComponent {...props}/>}
+        {...this.props}/>
+    );
   }
 }
 
 const Styles = StyleSheet.create({
   wrap: {
     flex: 1,
+    width,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
     overflow: 'hidden'
   },
   refresh: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
+    width,
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: '#d6d6d6'
   },
-  infinite: {
+  loadMore: {
+    width,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
     position: 'absolute',
-    bottom: 0,
     left: 0,
+    bottom: 0,
+    backgroundColor: '#feafea'
   }
 });

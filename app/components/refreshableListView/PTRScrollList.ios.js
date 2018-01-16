@@ -232,11 +232,11 @@ export default class PTRScrollComponent extends Component {
     switch (scrollComponent) {
       case 'ScrollView':
       case 'ListView':
-        this._flatList.scrollTo({x: 0, y: offset, animated})
+        this._scrollInstance.scrollTo({x: 0, y: offset, animated})
         break
       case 'FlatList':
       case 'VirtualizedList':
-        this._flatList.scrollToOffset({offset, animated})
+        this._scrollInstance.scrollToOffset({offset, animated})
         break
     }
   }
@@ -517,7 +517,7 @@ export default class PTRScrollComponent extends Component {
         {
           React.cloneElement(ScrollComponent, {
             ref: ref => {
-              this._flatList = ref
+              this._scrollInstance = ref
               this.props.getRef instanceof Function && this.props.getRef(ref)
             },
             scrollEventThrottle: this.props.scrollEventThrottle || 4,

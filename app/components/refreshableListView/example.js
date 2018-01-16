@@ -12,8 +12,7 @@ import {
   TouchableHighlight,
   ActivityIndicator
 }  from 'react-native';
-import RefresherFlatList from './PTRScrollList';
-import LinearGradient from 'react-native-linear-gradient';
+import RefresherFlatList from './PTRScrollView';
 import HBStyle from '../../styles/standard';
 import Util from '../../utility/util';
 
@@ -99,15 +98,15 @@ export default class Example extends Component {
   data = [];
 
   constructor(props) {
-    super(props);
+    super(props)
+    this.getData()
     this.state = {
       dataSource: ds.cloneWithRows(this.data),
     }
-    this.getData()
   }
 
   getData(init) {
-    let total = 5;
+    let total = 15;
     if (init) {
       this.data = [];
       total = Math.ceil(Math.random() * 20)
@@ -118,34 +117,16 @@ export default class Example extends Component {
   }
 
   renderRow = (rowData, sectionID, rowID) => {
-    let {dataSource, isShow} = this.state;
-    let _length = dataSource.getRowCount();
     return (
-      <View style={Styles.commonColumnSS}>
-        <View style={Styles.listItem}>
-          <View style={Styles.commonColumnSS}>
-            <View style={Styles.itemWrap}>
-              <Text style={Styles.font_3}>{rowData + Math.ceil(Math.random() * 1000)}</Text>
-              <Text style={Styles.font_2}>{'融资金额(元)'}</Text>
-            </View>
-            <View style={[Styles.itemWrap, {marginTop: 11}]}>
-              <LinearGradient
-                start={{x: 0.0, y: 1.0}} end={{x: 1.0, y: 1.0}}
-                colors={[HBStyle.color.common_green_status, HBStyle.color.common_green_item_bg, HBStyle.color.common_green_item_bg]}
-                locations={[0.3, 0.3 + 0.001, 1]}
-                style={Styles.itemProgressWrap}>
-                <Text style={Styles.font_5}>
-                  {'正常还款中'}
-                </Text>
-              </LinearGradient>
-              <Text style={Styles.font_4}>{'1000'}</Text>
-            </View>
-          </View>
-        </View>
-        {rowID < _length - 1 ? <View style={[Styles.divideLine, {marginLeft: 16}]}/> : null}
-      </View>
-    );
-  };
+      <TouchableHighlight
+        onPress={() => console.log('pressed!!!')}
+        activeOpacity={1}
+        underlayColor={'#e8e8e8'}
+        style={Styles.flatListItem}>
+        <Text style={Styles.font_3}>{rowData + ':' + rowID}</Text>
+      </TouchableHighlight>
+    )
+  }
 
   ItemSeparatorComponent = ({highlighted}) => {
     return <View style={[Styles.separator, {backgroundColor: highlighted ? '#FDFE3C' : '#feafea'}]}/>
@@ -166,57 +147,13 @@ export default class Example extends Component {
   }
 
   render() {
-    // return (
-    //   <View style={Styles.wrap}>
-    //     <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
-    //     <RefresherListView
-    //       dataSource={this.state.dataSource}
-    //       renderRow={this.renderRow}
-    //       showsVerticalScrollIndicator={false}
-    //       contentContainerStyle={{width: Util.size.screen.width, overflow: 'hidden'}}
-    //
-    //       enableHeaderRefresh={true}
-    //       renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
-    //       onHeaderRefreshing={() => {
-    //         clearTimeout(this._timer)
-    //         this._timer = setTimeout(() => {
-    //           this.getData(true)
-    //           this.setState({
-    //             dataSource: ds.cloneWithRows(this.data)
-    //           }, () => {
-    //             RefresherListView.headerRefreshDone()
-    //           })
-    //         }, 10000)
-    //       }}
-    //
-    //       enableFooterInfinite={true}
-    //       renderFooterInfinite={(gestureStatus) => <FooterInfinite gestureStatus={gestureStatus}/>}
-    //       onFooterInfiniting={() => {
-    //         clearTimeout(this._timer)
-    //         this._timer = setTimeout(() => {
-    //           this.getData()
-    //           this.setState({
-    //             dataSource: ds.cloneWithRows(this.data)
-    //           }, () => {
-    //             RefresherListView.footerInfiniteDone()
-    //           })
-    //         }, 1000)
-    //       }}
-    //     />
-    //   </View>
-    // )
     return (
       <View style={Styles.wrap}>
-        <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
+        <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#d5c639'}}/>
         <RefresherFlatList
-          data={this.data}
-          ItemSeparatorComponent={this.ItemSeparatorComponent}
-          renderItem={this.renderItem}
-          keyExtractor={(item, index) => ('flatPTR_' + index)}
+          dataSource={this.state.dataSource}
+          renderRow={this.renderRow}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{backgroundColor: '#ffffff'}}
-
-          scrollComponent={'FlatList'}
 
           enableHeaderRefresh={true}
           renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
@@ -229,7 +166,7 @@ export default class Example extends Component {
               }, () => {
                 RefresherFlatList.headerRefreshDone()
               })
-            }, 5000)
+            }, 10000)
           }}
 
           enableFooterInfinite={true}
@@ -248,6 +185,49 @@ export default class Example extends Component {
         />
       </View>
     )
+    // return (
+    //   <View style={Styles.wrap}>
+    //     <View style={{height: 40, width: Dimensions.get('window').width, backgroundColor: '#142124'}}/>
+    //     <RefresherFlatList
+    //       data={this.data}
+    //       ItemSeparatorComponent={this.ItemSeparatorComponent}
+    //       renderItem={this.renderItem}
+    //       keyExtractor={(item, index) => ('flatPTR_' + index)}
+    //       showsVerticalScrollIndicator={false}
+    //       contentContainerStyle={{backgroundColor: '#ffffff'}}
+    //
+    //       scrollComponent={'FlatList'}
+    //
+    //       enableHeaderRefresh={true}
+    //       renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
+    //       onHeaderRefreshing={() => {
+    //         clearTimeout(this._timer)
+    //         this._timer = setTimeout(() => {
+    //           this.getData(true)
+    //           this.setState({
+    //             dataSource: ds.cloneWithRows(this.data)
+    //           }, () => {
+    //             RefresherFlatList.headerRefreshDone()
+    //           })
+    //         }, 5000)
+    //       }}
+    //
+    //       enableFooterInfinite={true}
+    //       renderFooterInfinite={(gestureStatus) => <FooterInfinite gestureStatus={gestureStatus}/>}
+    //       onFooterInfiniting={() => {
+    //         clearTimeout(this._timer)
+    //         this._timer = setTimeout(() => {
+    //           this.getData()
+    //           this.setState({
+    //             dataSource: ds.cloneWithRows(this.data)
+    //           }, () => {
+    //             RefresherFlatList.footerInfiniteDone()
+    //           })
+    //         }, 1000)
+    //       }}
+    //     />
+    //   </View>
+    // )
   }
 }
 
