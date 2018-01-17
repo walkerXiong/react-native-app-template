@@ -31,7 +31,7 @@ let
 
 const _onHeaderRefreshing = () => {
   setTimeout(() => {
-    RefresherListView.headerRefreshDone();
+    PTRScrollComponent.headerRefreshDone();
   }, 2000)
 }
 
@@ -99,7 +99,7 @@ class HeaderRefresh extends Component {
 
 const _onFooterInfiniting = () => {
   setTimeout(() => {
-    RefresherListView.footerInfiniteDone()
+    PTRScrollComponent.footerInfiniteDone()
   }, 2000)
 }
 
@@ -165,35 +165,11 @@ class FooterInfinite extends Component {
   }
 }
 
-export default class PTRScrollComponent extends Component {
+class PTRScrollComponent extends Component {
   resetHeaderHeightHandle = -1
 
   static headerRefreshDone = () => null
   static footerInfiniteDone = () => null
-
-  static propTypes = {
-    scrollComponent: PropTypes.oneOf(['ScrollView', 'ListView', 'FlatList', 'VirtualizedList']).isRequired,
-
-    enableHeaderRefresh: PropTypes.bool,
-    renderHeaderRefresh: PropTypes.func,
-    onHeaderRefreshing: PropTypes.func,
-
-    enableFooterInfinite: PropTypes.bool,
-    renderFooterInfinite: PropTypes.func,
-    onFooterInfiniting: PropTypes.func,
-  }
-
-  static defaultProps = {
-    scrollComponent: 'FlatList',
-
-    enableHeaderRefresh: false,
-    renderHeaderRefresh: _renderHeaderRefresh,
-    onHeaderRefreshing: _onHeaderRefreshing,
-
-    enableFooterInfinite: false,
-    renderFooterInfinite: _renderFooterInfinite,
-    onFooterInfiniting: _onFooterInfiniting,
-  }
 
   constructor(props) {
     super(props)
@@ -391,7 +367,61 @@ export default class PTRScrollComponent extends Component {
   }
 
   render() {
-    let {scrollComponent, enableHeaderRefresh, enableFooterInfinite} = this.props
+    return (
+      <ScrollView
+        {...this.props}
+        ref={ref => this._scrollView = ref}
+        onTouchStart={this.onTouchStart}
+        onTouchMove={this.onTouchMove}
+        scrollEventThrottle={16}
+        onScroll={this.onScroll}
+        onScrollBeginDrag={this.onScrollBeginDrag}
+        onScrollEndDrag={this.onScrollEndDrag}
+        onMomentumScrollBegin={this.onMomentumScrollBegin}
+        onMomentumScrollEnd={this.onMomentumScrollEnd}>
+        <View ref={ref => this._headerRefreshWrap = ref} style={[Styles.refresh, {height: 0}]}>
+          <HeaderRefresh {...this.props}/>
+        </View>
+        {this.props.children}
+      </ScrollView>
+    )
+  }
+}
+
+export default class PTRScrollList extends Component {
+  static headerRefreshDone = () => PTRScrollComponent.headerRefreshDone()
+  static footerInfiniteDone = () => PTRScrollComponent.footerInfiniteDone()
+
+  static propTypes = {
+    scrollComponent: PropTypes.oneOf(['ScrollView', 'ListView', 'FlatList', 'VirtualizedList']).isRequired,
+
+    enableHeaderRefresh: PropTypes.bool,
+    renderHeaderRefresh: PropTypes.func,
+    onHeaderRefreshing: PropTypes.func,
+
+    enableFooterInfinite: PropTypes.bool,
+    renderFooterInfinite: PropTypes.func,
+    onFooterInfiniting: PropTypes.func,
+  }
+
+  static defaultProps = {
+    scrollComponent: 'FlatList',
+
+    enableHeaderRefresh: false,
+    renderHeaderRefresh: _renderHeaderRefresh,
+    onHeaderRefreshing: _onHeaderRefreshing,
+
+    enableFooterInfinite: false,
+    renderFooterInfinite: _renderFooterInfinite,
+    onFooterInfiniting: _onFooterInfiniting,
+  }
+
+  constructor(props) {
+    super(props)
+  }
+
+  render() {
+    let {scrollComponent} = this.props
     let ScrollComponent = null
     switch (scrollComponent) {
       case 'ScrollView':
@@ -411,44 +441,9 @@ export default class PTRScrollComponent extends Component {
         break
     }
     return (
-      <View style={Styles.wrap}>
-        <View
-          ref={ref => this._headerRefresh = ref}
-          onLayout={e => G_PULL_DOWN_DISTANCE = enableHeaderRefresh ? e.nativeEvent.layout.height : height}
-          style={[Styles.refresh, {
-            transform: [{
-              translateY: -height
-            }]
-          }]}>
-          {enableHeaderRefresh ? <HeaderRefresh {...this.props}/> : null}
-        </View>
-        <View
-          ref={ref => this._footerInfinite = ref}
-          onLayout={e => G_PULL_UP_DISTANCE = enableFooterInfinite ? e.nativeEvent.layout.height : height}
-          style={[Styles.infinite, {
-            transform: [{
-              translateY: height
-            }]
-          }]}>
-          {enableFooterInfinite ? <FooterInfinite {...this.props}/> : null}
-        </View>
-        {
-          React.cloneElement(ScrollComponent, {
-            ref: ref => {
-              this._scrollInstance = ref
-              this.props.getRef instanceof Function && this.props.getRef(ref)
-            },
-            scrollEventThrottle: this.props.scrollEventThrottle || 4,
-            onTouchStart: this.onTouchStart,
-            onTouchMove: this.onTouchMove,
-            onScroll: this.onScroll,
-            onScrollBeginDrag: this.onScrollBeginDrag,
-            onScrollEndDrag: this.onScrollEndDrag,
-            onMomentumScrollBegin: this.onMomentumScrollBegin,
-            onMomentumScrollEnd: this.onMomentumScrollEnd
-          }, this.props.children)
-        }
-      </View>
+      React.cloneElement(ScrollComponent, {
+        renderScrollComponent: props => <PTRScrollComponent {...props}/>
+      })
     )
   }
 }
@@ -459,9 +454,10 @@ const Styles = StyleSheet.create({
     overflow: 'hidden'
   },
   refresh: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: '#d6d6d6'
   },
   infinite: {
     position: 'absolute',

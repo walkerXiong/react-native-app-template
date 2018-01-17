@@ -12,7 +12,7 @@ import {
   TouchableHighlight,
   ActivityIndicator
 }  from 'react-native';
-import RefresherFlatList from './PTRScrollView';
+import RefresherFlatList from './PTRScrollList';
 import HBStyle from '../../styles/standard';
 import Util from '../../utility/util';
 
@@ -106,7 +106,7 @@ export default class Example extends Component {
   }
 
   getData(init) {
-    let total = 15;
+    let total = 6;
     if (init) {
       this.data = [];
       total = Math.ceil(Math.random() * 20)
@@ -118,13 +118,10 @@ export default class Example extends Component {
 
   renderRow = (rowData, sectionID, rowID) => {
     return (
-      <TouchableHighlight
-        onPress={() => console.log('pressed!!!')}
-        activeOpacity={1}
-        underlayColor={'#e8e8e8'}
+      <View
         style={Styles.flatListItem}>
         <Text style={Styles.font_3}>{rowData + ':' + rowID}</Text>
-      </TouchableHighlight>
+      </View>
     )
   }
 
@@ -154,6 +151,8 @@ export default class Example extends Component {
           dataSource={this.state.dataSource}
           renderRow={this.renderRow}
           showsVerticalScrollIndicator={false}
+
+          scrollComponent={'ListView'}
 
           enableHeaderRefresh={true}
           renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
