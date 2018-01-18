@@ -147,6 +147,7 @@ class PTRScrollComponent extends Component {
     this._headerRefreshHandle = setTimeout(() => {
       if (this.scrollContentHeight - G_PULL_DOWN_DISTANCE <= this.scrollViewHeight) {
         console.log('_headerRefreshDone short')
+        this._scrollView.setNativeProps({scrollEnabled: false})
         Animated.timing(this.state.p_translateY, {
           toValue: -G_PULL_DOWN_DISTANCE,
           duration: T_HEADER_ANI
@@ -157,6 +158,7 @@ class PTRScrollComponent extends Component {
       }
       else {
         console.log('_headerRefreshDone longer')
+        this._scrollView.setNativeProps({scrollEnabled: true})
         this.state.p_translateY.setValue(0)
         this.state.p_currPullDistance = 0
         this._setGestureStatus(G_STATUS_NONE, null, false)
@@ -368,7 +370,7 @@ class PTRScrollComponent extends Component {
     let _pullDown = gestureState.dy > 0 && gestureState.vy > 0
     let _pullUp = gestureState.dy < 0 && gestureState.vy < 0
 
-    if (this.scrollContentHeight <= this.scrollViewHeight) {
+    if (this.scrollContentHeight - G_PULL_DOWN_DISTANCE <= this.scrollViewHeight) {
       //到顶部
       if (_pullDown) {//下拉
         this.state.l_onTopReached_down = this.state.p_currPullDistance === 0

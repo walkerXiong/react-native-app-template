@@ -109,7 +109,7 @@ export default class Example extends Component {
     let total = 4;
     if (init) {
       this.data = [];
-      total = Math.ceil(Math.random() * 20)
+      total = Math.ceil(Math.random() * 7)
     }
     for (let i = 0; i < total; i++) {
       this.data.push('row' + Math.ceil(Math.random() * total));
@@ -165,7 +165,7 @@ export default class Example extends Component {
               }, () => {
                 RefresherFlatList.headerRefreshDone()
               })
-            }, 5000)
+            }, 1000)
           }}
           setHeaderHeight={100}
 
