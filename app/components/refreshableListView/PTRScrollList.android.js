@@ -246,16 +246,20 @@ class PTRScrollComponent extends Component {
         }
       }
     }
+
+    this.props.onScroll instanceof Function && this.props.onScroll(e)
   }
 
   onTouchStart = (e) => {
     console.log('onTouchStart')
     this.state.startPageY = e.nativeEvent.pageY
+    this.props.onTouchStart instanceof Function && this.props.onTouchStart(e)
   }
 
   onTouchMove = (e) => {
     console.log('onTouchMove')
     this.state.movePageY = e.nativeEvent.pageY
+    this.props.onTouchMove instanceof Function && this.props.onTouchMove(e)
   }
 
   onScrollBeginDrag = (e) => {
@@ -285,6 +289,8 @@ class PTRScrollComponent extends Component {
         }
       }
     }
+
+    this.props.onScrollBeginDrag instanceof Function && this.props.onScrollBeginDrag(e)
   }
 
   onScrollEndDrag = (e) => {
@@ -317,12 +323,15 @@ class PTRScrollComponent extends Component {
         this._setGestureStatus(G_STATUS_FOOTER_REFRESHING, null, true, false)
       }
     }
+
+    this.props.onScrollEndDrag instanceof Function && this.props.onScrollEndDrag(e)
   }
 
   onMomentumScrollBegin = (e) => {
     //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
     console.log('xq debug===onMomentumScrollBegin')
     this.state.onScrollWithoutDrag = true
+    this.props.onMomentumScrollBegin instanceof Function && this.props.onMomentumScrollBegin(e)
   }
 
   onMomentumScrollEnd = (e) => {
@@ -338,6 +347,8 @@ class PTRScrollComponent extends Component {
         }
       }
     }
+
+    this.props.onMomentumScrollEnd instanceof Function && this.props.onMomentumScrollEnd(e)
   }
 
   scrollViewLayout = (e) => {
@@ -434,7 +445,7 @@ class PTRScrollComponent extends Component {
 
   render() {
     return (
-      <View {...this._panResponder.panHandlers}>
+      <View style={{flex: 1}} {...this._panResponder.panHandlers}>
         <ScrollView
           {...this.props}
           ref={ref => this._scrollView = ref}
