@@ -12,7 +12,8 @@ import {
   ScrollView,
   ListView,
   FlatList,
-  VirtualizedList
+  VirtualizedList,
+  PanResponder
 } from 'react-native'
 
 const {width, height} = Dimensions.get('window')
@@ -27,7 +28,8 @@ const
 let
   G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
   G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
-  G_MAX_PULL_DISTANCE = 70;//下拉刷新最大下拉距离
+  G_MAX_PULL_DISTANCE = 70,//下拉刷新最大下拉距离
+  T_HEADER_ANI = 260//刷新头部动画时间
 
 const _onHeaderRefreshing = () => {
   setTimeout(() => {
@@ -98,6 +100,7 @@ class HeaderRefresh extends Component {
 }
 
 class PTRScrollComponent extends Component {
+  _headerRefreshHandle = -1//刷新完成句柄
   static headerRefreshDone = () => null
 
   constructor(props) {
@@ -114,9 +117,20 @@ class PTRScrollComponent extends Component {
       movePageY: 0,
       dragDirection: 0,//-1上拉 0无 1下拉
 
-      headerHeight: new Animated.Value(G_PULL_DOWN_DISTANCE)
+      p_translateY: new Animated.Value(0),
+      p_currPullDistance: G_PULL_DOWN_DISTANCE,
+      p_lastPullDistance: 0,
+      l_onTopReached_down: false,
     }
     PTRScrollComponent.headerRefreshDone = this._headerRefreshDone
+  }
+
+  componentWillMount() {
+    this._panResponder = PanResponder.create({
+      onMoveShouldSetPanResponderCapture: this.onMoveShouldSetPanResponderCapture,
+      onPanResponderMove: this.onPanResponderMove,
+      onPanResponderEnd: this.onPanResponderEnd,
+    });
   }
 
   componentDidMount() {
@@ -124,9 +138,31 @@ class PTRScrollComponent extends Component {
     this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
   }
 
+  componentWillUnmount() {
+    clearTimeout(this._headerRefreshHandle)
+  }
+
   _headerRefreshDone = () => {
-    this._setGestureStatus(G_STATUS_NONE, null, false)
-    this._scrollToPos(0, G_PULL_DOWN_DISTANCE, true)
+    //定时是因为：存在可能scrollContentLayout函数调用比_headerRefreshDone函数调用慢，导致两个值的比较没有真实反映出scrollView的内容宽度
+    this._headerRefreshHandle = setTimeout(() => {
+      if (this.scrollContentHeight - G_PULL_DOWN_DISTANCE <= this.scrollViewHeight) {
+        console.log('_headerRefreshDone short')
+        Animated.timing(this.state.p_translateY, {
+          toValue: -G_PULL_DOWN_DISTANCE,
+          duration: T_HEADER_ANI
+        }).start(() => {
+          this._setGestureStatus(G_STATUS_NONE, null, false)
+          this.state.p_currPullDistance = 0
+        })
+      }
+      else {
+        console.log('_headerRefreshDone longer')
+        this.state.p_translateY.setValue(0)
+        this.state.p_currPullDistance = 0
+        this._setGestureStatus(G_STATUS_NONE, null, false)
+        this._scrollToPos(0, G_PULL_DOWN_DISTANCE, true)
+      }
+    }, 100)
   }
 
   _setGestureStatus = (status, callback, refresh) => {
@@ -306,37 +342,119 @@ class PTRScrollComponent extends Component {
 
   scrollViewLayout = (e) => {
     console.log('===xq debug===scrollViewLayout')
-    console.log(e.nativeEvent)
     this.scrollViewHeight = e.nativeEvent.layout.height
   }
 
   scrollContentLayout = (e) => {
     console.log('===xq debug===scrollContentLayout')
-    console.log(e.nativeEvent)
     this.scrollContentHeight = e.nativeEvent.layout.height
+  }
+
+  onMoveShouldSetPanResponderCapture = (evt, gestureState) => {
+    this.state.l_onTopReached_down = this.state.l_onTopReached_up = false
+    this.state.p_lastPullDistance = this.state.p_currPullDistance
+
+    let _pullDown = gestureState.dy > 0 && gestureState.vy > 0
+    let _pullUp = gestureState.dy < 0 && gestureState.vy < 0
+
+    if (this.scrollContentHeight <= this.scrollViewHeight) {
+      //到顶部
+      if (_pullDown) {//下拉
+        this.state.l_onTopReached_down = this.state.p_currPullDistance === 0
+      }
+      else if (_pullUp) {//上拉
+        this.state.l_onTopReached_up = this.state.p_currPullDistance !== 0
+      }
+    }
+
+    return this.props.enableHeaderRefresh && (this.state.l_onTopReached_down || this.state.l_onTopReached_up)
+  }
+
+  onPanResponderMove = (evt, gestureState) => {
+    let _translateY = Math.ceil(Math.abs(gestureState.dy)) * 0.46
+    console.log('onPanResponderMove===_translateY:' + _translateY + ';l_onTopReached_up:' + this.state.l_onTopReached_up + ';gestureState.dy:' + gestureState.dy + ';G_PULL_DOWN_DISTANCE:' + G_PULL_DOWN_DISTANCE + ';this.state.p_currPullDistance:' + this.state.p_currPullDistance)
+    //下拉刷新
+    if (this.state.l_onTopReached_down && gestureState.dy > 0) {
+      this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY
+      this.state.p_translateY.setValue(-G_PULL_DOWN_DISTANCE + this.state.p_currPullDistance)
+
+      if (this.state.gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+        if (this.state.p_currPullDistance >= G_PULL_DOWN_DISTANCE) {
+          if (this.state.gestureStatus !== G_STATUS_RELEASE_TO_REFRESH) {
+            this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, true)
+          }
+        }
+        else {
+          if (this.state.gestureStatus !== G_STATUS_PULLING_DOWN) {
+            this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+          }
+        }
+      }
+    }
+    //上拉隐藏刷新面板
+    else if (this.state.l_onTopReached_up && gestureState.dy < 0) {
+      let _currPullDistance = this.state.p_lastPullDistance - _translateY
+      this.state.p_currPullDistance = _currPullDistance <= 0 ? 0 : _currPullDistance
+      this.state.p_translateY.setValue(-G_PULL_DOWN_DISTANCE + this.state.p_currPullDistance)
+
+      if (this.state.gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+        if (this.state.p_currPullDistance < G_PULL_DOWN_DISTANCE) {
+          if (this.state.gestureStatus !== G_STATUS_PULLING_DOWN) {
+            this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+          }
+        }
+      }
+    }
+  }
+
+  onPanResponderEnd = () => {
+    //下拉刷新
+    if (this.state.l_onTopReached_down) {
+      if (this.state.p_currPullDistance < G_PULL_DOWN_DISTANCE) {
+        Animated.timing(this.state.p_translateY, {
+          toValue: -G_PULL_DOWN_DISTANCE,
+          duration: T_HEADER_ANI
+        }).start(() => this.state.p_currPullDistance = 0)
+      }
+      else {
+        if (this.state.gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+          this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
+          this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
+        }
+      }
+    }
+    //上拉隐藏刷新面板
+    else if (this.state.l_onTopReached_up) {
+      Animated.timing(this.state.p_translateY, {
+        toValue: -G_PULL_DOWN_DISTANCE,
+        duration: T_HEADER_ANI
+      }).start(() => this.state.p_currPullDistance = 0)
+    }
   }
 
   render() {
     return (
-      <ScrollView
-        {...this.props}
-        ref={ref => this._scrollView = ref}
-        onLayout={this.scrollViewLayout}
-        onTouchStart={this.onTouchStart}
-        onTouchMove={this.onTouchMove}
-        scrollEventThrottle={16}
-        onScroll={this.onScroll}
-        onScrollBeginDrag={this.onScrollBeginDrag}
-        onScrollEndDrag={this.onScrollEndDrag}
-        onMomentumScrollBegin={this.onMomentumScrollBegin}
-        onMomentumScrollEnd={this.onMomentumScrollEnd}>
-        <View onLayout={this.scrollContentLayout}>
-          <Animated.View style={{height: this.state.headerHeight}}>
+      <View {...this._panResponder.panHandlers}>
+        <ScrollView
+          {...this.props}
+          ref={ref => this._scrollView = ref}
+          onLayout={this.scrollViewLayout}
+          onTouchStart={this.onTouchStart}
+          onTouchMove={this.onTouchMove}
+          scrollEventThrottle={16}
+          onScroll={this.onScroll}
+          onScrollBeginDrag={this.onScrollBeginDrag}
+          onScrollEndDrag={this.onScrollEndDrag}
+          onMomentumScrollBegin={this.onMomentumScrollBegin}
+          onMomentumScrollEnd={this.onMomentumScrollEnd}>
+          <Animated.View
+            style={{transform: [{translateY: this.state.p_translateY}]}}
+            onLayout={this.scrollContentLayout}>
             <HeaderRefresh {...this.props}/>
+            {this.props.children}
           </Animated.View>
-          {this.props.children}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     )
   }
 }

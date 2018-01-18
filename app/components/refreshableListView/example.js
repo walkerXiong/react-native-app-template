@@ -106,7 +106,7 @@ export default class Example extends Component {
   }
 
   getData(init) {
-    let total = 6;
+    let total = 4;
     if (init) {
       this.data = [];
       total = Math.ceil(Math.random() * 20)
@@ -165,8 +165,9 @@ export default class Example extends Component {
               }, () => {
                 RefresherFlatList.headerRefreshDone()
               })
-            }, 10000)
+            }, 5000)
           }}
+          setHeaderHeight={100}
 
           enableFooterInfinite={true}
           renderFooterInfinite={(gestureStatus) => <FooterInfinite gestureStatus={gestureStatus}/>}
@@ -391,6 +392,8 @@ const Styles = StyleSheet.create({
     width: Dimensions.get('window').width,
     height: 100,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#feafea'
   }
 });
