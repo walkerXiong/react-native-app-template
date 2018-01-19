@@ -384,7 +384,7 @@ class PTRScrollComponent extends Component {
   }
 
   onPanResponderMove = (evt, gestureState) => {
-    let _translateY = Math.ceil(Math.abs(gestureState.dy)) * 0.46
+    let _translateY = Math.ceil(Math.abs(gestureState.dy)) * 0.48
     console.log('onPanResponderMove===_translateY:' + _translateY + ';l_onTopReached_up:' + this.state.l_onTopReached_up + ';gestureState.dy:' + gestureState.dy + ';G_PULL_DOWN_DISTANCE:' + G_PULL_DOWN_DISTANCE + ';this.state.p_currPullDistance:' + this.state.p_currPullDistance)
     //下拉刷新
     if (this.state.l_onTopReached_down && gestureState.dy > 0) {
@@ -503,7 +503,7 @@ export default class PTRScrollList extends Component {
     let ScrollComponent = null
     switch (scrollComponent) {
       case 'ScrollView':
-        ScrollComponent = <ScrollView {...this.props}/>
+        ScrollComponent = <PTRScrollComponent {...this.props}/>
         break
       case 'ListView':
         ScrollComponent = <ListView {...this.props}/>
