@@ -28,7 +28,6 @@ const
 let
   G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
   G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
-  G_MAX_PULL_DISTANCE = 70,//下拉刷新最大下拉距离
   T_HEADER_ANI = 260//刷新头部动画时间
 
 const _onHeaderRefreshing = () => {
@@ -99,9 +98,78 @@ class HeaderRefresh extends Component {
   }
 }
 
+const _onFooterInfiniting = () => {
+  setTimeout(() => {
+    RefresherListView.footerInfiniteDone()
+  }, 2000)
+}
+
+const _renderFooterInfinite = (gestureStatus) => {
+  switch (gestureStatus) {
+    case G_STATUS_PULLING_UP:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'上拉即可加载更多...'}</Text>
+        </View>
+      )
+      break
+    case G_STATUS_RELEASE_TO_REFRESH:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'松开即可加载更多...'}</Text>
+        </View>
+      )
+      break
+    case G_STATUS_FOOTER_REFRESHING:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'正在加载...'}</Text>
+        </View>
+      )
+      break;
+    default:
+      return (
+        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>{'上拉即可加载更多...'}</Text>
+        </View>
+      )
+  }
+}
+
+class FooterInfinite extends Component {
+  static setGestureStatus = (gestureStatus, callback) => null
+
+  static defaultProps = {
+    renderFooterInfinite: () => null
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      gestureStatus: G_STATUS_NONE,
+    }
+    FooterInfinite.setGestureStatus = this._setGestureStatus
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextState.gestureStatus !== this.state.gestureStatus
+  }
+
+  _setGestureStatus = (gestureStatus, callback) => {
+    if (gestureStatus !== this.state.gestureStatus) {
+      this.setState({gestureStatus}, () => callback instanceof Function && callback())
+    }
+  }
+
+  render() {
+    return this.props.renderFooterInfinite(this.state.gestureStatus)
+  }
+}
+
 class PTRScrollComponent extends Component {
   _headerRefreshHandle = -1//刷新完成句柄
   static headerRefreshDone = () => null
+  static footerInfiniteDone = () => null
 
   constructor(props) {
     super(props)
@@ -123,6 +191,7 @@ class PTRScrollComponent extends Component {
       l_onTopReached_down: false,
     }
     PTRScrollComponent.headerRefreshDone = this._headerRefreshDone
+    PTRScrollComponent.footerInfiniteDone = this._footerInfiniteDone
   }
 
   componentWillMount() {
@@ -150,9 +219,10 @@ class PTRScrollComponent extends Component {
         this._scrollView.setNativeProps({scrollEnabled: false})
         Animated.timing(this.state.p_translateY, {
           toValue: -G_PULL_DOWN_DISTANCE,
-          duration: T_HEADER_ANI
+          duration: T_HEADER_ANI,
+          useNativeDriver: true
         }).start(() => {
-          this._setGestureStatus(G_STATUS_NONE, null, false)
+          this._setGestureStatus(G_STATUS_NONE, null, false, true)
           this.state.p_currPullDistance = 0
         })
       }
@@ -161,16 +231,21 @@ class PTRScrollComponent extends Component {
         this._scrollView.setNativeProps({scrollEnabled: true})
         this.state.p_translateY.setValue(0)
         this.state.p_currPullDistance = 0
-        this._setGestureStatus(G_STATUS_NONE, null, false)
+        this._setGestureStatus(G_STATUS_NONE, null, false, true)
         this._scrollToPos(0, G_PULL_DOWN_DISTANCE, true)
       }
-    }, 100)
+    }, 200)
   }
 
-  _setGestureStatus = (status, callback, refresh) => {
+  _footerInfiniteDone = () => {
+    this._setGestureStatus(G_STATUS_NONE, null, false, false)
+    this._footerInfinite.setNativeProps({style: {height: 0}})
+  }
+
+  _setGestureStatus = (status, callback, refresh, updateHeader) => {
     this.state.gestureStatus = status
     if (refresh) {
-      HeaderRefresh.setGestureStatus(status, callback)
+      updateHeader ? HeaderRefresh.setGestureStatus(status, callback) : FooterInfinite.setGestureStatus(status, callback)
     }
   }
 
@@ -181,7 +256,11 @@ class PTRScrollComponent extends Component {
   onScroll = (e) => {
     console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
+    let {contentSize, layoutMeasurement} = e.nativeEvent
     let {gestureStatus, onDrag, onScrollWithoutDrag, dragDirection} = this.state
+    let _maxOffsetY = contentSize.height - layoutMeasurement.height
+
+    console.log('onScroll===_maxOffsetY:' + _maxOffsetY + ';y:' + y + ';dragDirection:' + dragDirection)
 
     //下拉
     if (dragDirection === 1) {
@@ -220,6 +299,39 @@ class PTRScrollComponent extends Component {
     }
     //上拉
     else if (dragDirection === -1) {
+      if (gestureStatus === G_STATUS_NONE) {
+        if (onDrag) {
+          //开始上拉
+          if (y >= _maxOffsetY) {
+            this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+          }
+        }
+        else {
+          if (onScrollWithoutDrag) {
+            //当前状态为正在惯性滚动
+          }
+          else {
+            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
+            if (y <= _maxOffsetY - G_PULL_UP_DISTANCE) {
+              //加载完毕归位
+              this._setGestureStatus(G_STATUS_NONE, null, true, false)
+              this._footerInfinite.setNativeProps({style: {height: 0}})
+            }
+          }
+        }
+      }
+      else if (gestureStatus === G_STATUS_PULLING_UP) {
+        //上拉加载
+        if (y >= _maxOffsetY) {
+          this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, false)
+        }
+      }
+      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+        //释放刷新
+        if (y < _maxOffsetY) {
+          this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+        }
+      }
     }
     else {
       if (gestureStatus === G_STATUS_NONE) {
@@ -228,6 +340,12 @@ class PTRScrollComponent extends Component {
           if (y <= G_PULL_DOWN_DISTANCE) {
             this.state.dragDirection = 1
             this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+          }
+          //开始上拉
+          else if (y >= _maxOffsetY) {
+            this.state.dragDirection = -1
+            this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+            this._footerInfinite.setNativeProps({style: {height: G_PULL_UP_DISTANCE}})
           }
         }
         else {
@@ -288,6 +406,7 @@ class PTRScrollComponent extends Component {
         this.state.dragDirection = -1
         if (gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
           this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+          this._footerInfinite.setNativeProps({style: {height: G_PULL_UP_DISTANCE}})
         }
       }
     }
@@ -318,7 +437,7 @@ class PTRScrollComponent extends Component {
     else if (dragDirection === -1) {
       if (gestureStatus === G_STATUS_PULLING_UP) {
         this._setGestureStatus(G_STATUS_NONE, null, false, false)
-        this._scrollToPos(0, _maxOffsetY, true)
+        this._scrollToPos(0, _maxOffsetY - G_PULL_UP_DISTANCE, true)
       }
       else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
         this.props.onFooterInfiniting instanceof Function && this.props.onFooterInfiniting()
@@ -426,7 +545,8 @@ class PTRScrollComponent extends Component {
       if (this.state.p_currPullDistance < G_PULL_DOWN_DISTANCE) {
         Animated.timing(this.state.p_translateY, {
           toValue: -G_PULL_DOWN_DISTANCE,
-          duration: T_HEADER_ANI
+          duration: T_HEADER_ANI,
+          useNativeDriver: true
         }).start(() => this.state.p_currPullDistance = 0)
       }
       else {
@@ -440,7 +560,8 @@ class PTRScrollComponent extends Component {
     else if (this.state.l_onTopReached_up) {
       Animated.timing(this.state.p_translateY, {
         toValue: -G_PULL_DOWN_DISTANCE,
-        duration: T_HEADER_ANI
+        duration: T_HEADER_ANI,
+        useNativeDriver: true
       }).start(() => this.state.p_currPullDistance = 0)
     }
   }
@@ -465,6 +586,9 @@ class PTRScrollComponent extends Component {
             onLayout={this.scrollContentLayout}>
             <HeaderRefresh {...this.props}/>
             {this.props.children}
+            <View ref={ref => this._footerInfinite = ref} style={{height: 0, backgroundColor: 'transparent'}}>
+              <FooterInfinite {...this.props}/>
+            </View>
           </Animated.View>
         </ScrollView>
       </View>
@@ -474,6 +598,7 @@ class PTRScrollComponent extends Component {
 
 export default class PTRScrollList extends Component {
   static headerRefreshDone = () => PTRScrollComponent.headerRefreshDone()
+  static footerInfiniteDone = () => PTRScrollComponent.footerInfiniteDone()
 
   static propTypes = {
     scrollComponent: PropTypes.oneOf(['ScrollView', 'ListView', 'FlatList', 'VirtualizedList']).isRequired,
@@ -482,6 +607,11 @@ export default class PTRScrollList extends Component {
     renderHeaderRefresh: PropTypes.func,
     setHeaderHeight: PropTypes.number,
     onHeaderRefreshing: PropTypes.func,
+
+    enableFooterInfinite: PropTypes.bool,
+    renderFooterInfinite: PropTypes.func,
+    setFooterHeight: PropTypes.number,
+    onFooterInfiniting: PropTypes.func,
   }
 
   static defaultProps = {
@@ -491,11 +621,17 @@ export default class PTRScrollList extends Component {
     renderHeaderRefresh: _renderHeaderRefresh,
     setHeaderHeight: G_PULL_DOWN_DISTANCE,
     onHeaderRefreshing: _onHeaderRefreshing,
+
+    enableFooterInfinite: false,
+    renderFooterInfinite: _renderFooterInfinite,
+    setFooterHeight: G_PULL_UP_DISTANCE,
+    onFooterInfiniting: _onFooterInfiniting,
   }
 
   constructor(props) {
     super(props)
     G_PULL_DOWN_DISTANCE = props.setHeaderHeight
+    G_PULL_UP_DISTANCE = props.setFooterHeight
   }
 
   render() {

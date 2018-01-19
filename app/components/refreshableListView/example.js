@@ -109,7 +109,7 @@ export default class Example extends Component {
     let total = 4;
     if (init) {
       this.data = [];
-      total = Math.ceil(Math.random() * 7)
+      total = Math.ceil(Math.random() * 17)
     }
     for (let i = 0; i < total; i++) {
       this.data.push('row' + Math.ceil(Math.random() * total));
@@ -156,6 +156,7 @@ export default class Example extends Component {
 
           enableHeaderRefresh={true}
           renderHeaderRefresh={(gestureStatus) => <HeaderRefresh gestureStatus={gestureStatus}/>}
+          setHeaderHeight={100}
           onHeaderRefreshing={() => {
             clearTimeout(this._timer)
             this._timer = setTimeout(() => {
@@ -167,10 +168,10 @@ export default class Example extends Component {
               })
             }, 1000)
           }}
-          setHeaderHeight={100}
 
           enableFooterInfinite={true}
           renderFooterInfinite={(gestureStatus) => <FooterInfinite gestureStatus={gestureStatus}/>}
+          setFooterHeight={60}
           onFooterInfiniting={() => {
             clearTimeout(this._timer)
             this._timer = setTimeout(() => {
@@ -180,7 +181,7 @@ export default class Example extends Component {
               }, () => {
                 RefresherFlatList.footerInfiniteDone()
               })
-            }, 1000)
+            }, 15000)
           }}
         />
       </View>
