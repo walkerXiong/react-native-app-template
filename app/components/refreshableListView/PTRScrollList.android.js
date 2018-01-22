@@ -243,6 +243,7 @@ class PTRScrollComponent extends Component {
   }
 
   _footerInfiniteDone = () => {
+    this.props.enableHeaderRefresh && this._headerRefresh.setNativeProps({style: {height: this.props.setHeaderHeight}})
     this._setGestureStatus(G_STATUS_NONE, null, false, false)
     this._footerInfinite.setNativeProps({style: {height: 0}})
   }
@@ -316,7 +317,11 @@ class PTRScrollComponent extends Component {
       }
       //交互操作之后，视图正在滚动
       else if (onScrollWithoutDrag) {
-
+        if (y <= _maxOffsetY - G_PULL_UP_DISTANCE) {
+          //惯性滚动位置滚出加载区域时，重置加载区域
+          this._setGestureStatus(G_STATUS_NONE, null, true, false)
+          this._footerInfinite.setNativeProps({style: {height: 0}})
+        }
       }
       //函数滚动，scrollTo，scrollTo不会触发 onMomentumScrollBegin
       else {
@@ -343,12 +348,6 @@ class PTRScrollComponent extends Component {
             this.state.dragDirection = -1
             this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
             this._footerInfinite.setNativeProps({style: {height: G_PULL_UP_DISTANCE}})
-          }
-        }
-        //底部正在加载，不做状态值的改变，只改变dragDirection，并后续交由onScrollEndDrag处理
-        else if (gestureStatus === G_STATUS_FOOTER_REFRESHING) {
-          if (y <= G_PULL_DOWN_DISTANCE) {
-            this.state.dragDirection = 1
           }
         }
       }
@@ -440,6 +439,7 @@ class PTRScrollComponent extends Component {
         this._scrollToPos(0, _maxOffsetY - G_PULL_UP_DISTANCE, true)
       }
       else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+        this.props.enableHeaderRefresh && this._headerRefresh.setNativeProps({style: {height: 0}})
         this._setGestureStatus(G_STATUS_FOOTER_REFRESHING, null, true, false)
         this.props.onFooterInfiniting instanceof Function && this.props.onFooterInfiniting()
       }
@@ -464,11 +464,6 @@ class PTRScrollComponent extends Component {
 
     if (dragDirection === 0) {
       if (gestureStatus === G_STATUS_NONE) {
-        if (contentOffset.y < G_PULL_DOWN_DISTANCE) {
-          this._scrollToPos(0, G_PULL_DOWN_DISTANCE, true)
-        }
-      }
-      else if (gestureStatus === G_STATUS_FOOTER_REFRESHING) {
         if (contentOffset.y < G_PULL_DOWN_DISTANCE) {
           this._scrollToPos(0, G_PULL_DOWN_DISTANCE, true)
         }
