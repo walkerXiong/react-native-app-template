@@ -181,7 +181,7 @@ export default class Example extends Component {
               }, () => {
                 RefresherFlatList.footerInfiniteDone()
               })
-            }, 5000)
+            }, 15000)
           }}
         />
       </View>
