@@ -260,7 +260,7 @@ class PTRScrollComponent extends Component {
     let {gestureStatus, onDrag, onScrollWithoutDrag, dragDirection} = this.state
     let _maxOffsetY = contentSize.height - layoutMeasurement.height
 
-    console.log('onScroll===_maxOffsetY:' + _maxOffsetY + ';y:' + y + ';dragDirection:' + dragDirection)
+    console.log('onScroll===_maxOffsetY:' + _maxOffsetY + ';y:' + y + ';dragDirection:' + dragDirection + ';onDrag:' + onDrag + ';gestureStatus:' + gestureStatus)
 
     //下拉
     if (dragDirection === 1) {
@@ -309,6 +309,11 @@ class PTRScrollComponent extends Component {
         else {
           if (onScrollWithoutDrag) {
             //当前状态为正在惯性滚动
+            if (y <= _maxOffsetY - G_PULL_UP_DISTANCE) {
+              //惯性滚动位置滚出加载区域时，重置加载区域
+              this._setGestureStatus(G_STATUS_NONE, null, true, false)
+              this._footerInfinite.setNativeProps({style: {height: 0}})
+            }
           }
           else {
             //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
@@ -459,12 +464,26 @@ class PTRScrollComponent extends Component {
     console.log('xq debug===onMomentumScrollEnd')
     this.state.onScrollWithoutDrag = false
 
-    let {contentOffset} = e.nativeEvent
     let {gestureStatus, dragDirection} = this.state
+    let {contentOffset, contentSize, layoutMeasurement} = e.nativeEvent
+    let _maxOffsetY = contentSize.height - layoutMeasurement.height
+
     if (dragDirection === 0) {
       if (gestureStatus === G_STATUS_NONE) {
         if (contentOffset.y < G_PULL_DOWN_DISTANCE) {
           this._scrollToPos(0, G_PULL_DOWN_DISTANCE, true)
+        }
+      }
+    }
+    //下拉
+    else if (dragDirection === 1) {
+
+    }
+    //上拉
+    else if (dragDirection === -1) {
+      if (gestureStatus === G_STATUS_NONE) {
+        if (contentOffset.y > _maxOffsetY - G_PULL_UP_DISTANCE) {
+          this._scrollToPos(0, _maxOffsetY, true)
         }
       }
     }
