@@ -205,8 +205,11 @@ class PTRScrollComponent extends Component {
   }
 
   componentDidMount() {
-    this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
-    this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
+    let {enableHeaderRefresh, onHeaderRefreshing} = this.props
+    if (enableHeaderRefresh) {
+      onHeaderRefreshing instanceof Function && onHeaderRefreshing()
+      this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
+    }
   }
 
   componentWillUnmount() {
@@ -336,7 +339,7 @@ class PTRScrollComponent extends Component {
             this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
           }
           //开始上拉
-          else if (y >= _maxOffsetY) {
+          else if (y >= _maxOffsetY && this.props.enableFooterInfinite) {
             this.state.dragDirection = -1
             this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
             this._footerInfinite.setNativeProps({style: {height: G_PULL_UP_DISTANCE}})
@@ -400,7 +403,7 @@ class PTRScrollComponent extends Component {
       //到底部
       if (movePageY < startPageY) {
         //上拉
-        if (gestureStatus !== G_STATUS_HEADER_REFRESHING && gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+        if (gestureStatus !== G_STATUS_HEADER_REFRESHING && gestureStatus !== G_STATUS_FOOTER_REFRESHING && this.props.enableFooterInfinite) {
           this.state.dragDirection = -1
           this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
           this._footerInfinite.setNativeProps({style: {height: G_PULL_UP_DISTANCE}})
@@ -570,6 +573,7 @@ class PTRScrollComponent extends Component {
   }
 
   render() {
+    let {enableHeaderRefresh, enableFooterInfinite} = this.props
     return (
       <View style={{flex: 1}} {...this._panResponder.panHandlers}>
         <ScrollView
@@ -587,10 +591,12 @@ class PTRScrollComponent extends Component {
           <Animated.View
             style={{transform: [{translateY: this.state.p_translateY}]}}
             onLayout={this.scrollContentLayout}>
-            <HeaderRefresh {...this.props}/>
+            <View ref={ref => this._headerRefresh = ref} style={{backgroundColor: 'transparent'}}>
+              {enableHeaderRefresh ? <HeaderRefresh {...this.props}/> : null}
+            </View>
             {this.props.children}
             <View ref={ref => this._footerInfinite = ref} style={{height: 0, backgroundColor: 'transparent'}}>
-              <FooterInfinite {...this.props}/>
+              {enableFooterInfinite ? <FooterInfinite {...this.props}/> : null}
             </View>
           </Animated.View>
         </ScrollView>
@@ -633,8 +639,14 @@ export default class PTRScrollList extends Component {
 
   constructor(props) {
     super(props)
-    G_PULL_DOWN_DISTANCE = props.setHeaderHeight
+    G_PULL_DOWN_DISTANCE = props.enableHeaderRefresh ? props.setHeaderHeight : -height
     G_PULL_UP_DISTANCE = props.setFooterHeight
+  }
+
+  componentWillReceiveProps(nextProps, nextState) {
+    if (nextProps.enableHeaderRefresh !== undefined) {
+      G_PULL_DOWN_DISTANCE = nextProps.enableHeaderRefresh ? this.props.setHeaderHeight : -height
+    }
   }
 
   render() {
