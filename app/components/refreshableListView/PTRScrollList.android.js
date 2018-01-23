@@ -5,7 +5,6 @@
 import React, {Component, PropTypes} from 'react'
 import {
   View,
-  StyleSheet,
   Dimensions,
   Animated,
   Text,
@@ -220,7 +219,6 @@ class PTRScrollComponent extends Component {
     //定时是因为：存在可能scrollContentLayout函数调用比_headerRefreshDone函数调用慢，导致两个值的比较没有真实反映出scrollView的内容宽度
     this._headerRefreshHandle = setTimeout(() => {
       if (this.scrollContentHeight - G_PULL_DOWN_DISTANCE <= this.scrollViewHeight) {
-        console.log('_headerRefreshDone short')
         this._scrollView.setNativeProps({scrollEnabled: false})
         Animated.timing(this.state.p_translateY, {
           toValue: -G_PULL_DOWN_DISTANCE,
@@ -232,7 +230,6 @@ class PTRScrollComponent extends Component {
         })
       }
       else {
-        console.log('_headerRefreshDone longer')
         this._scrollView.setNativeProps({scrollEnabled: true})
         this.state.p_translateY.setValue(0)
         this.state.p_currPullDistance = 0
@@ -260,13 +257,10 @@ class PTRScrollComponent extends Component {
   }
 
   onScroll = (e) => {
-    console.log('xq debug===onScroll')
     let {y} = e.nativeEvent.contentOffset
     let {contentSize, layoutMeasurement} = e.nativeEvent
     let {gestureStatus, onDrag, onScrollWithoutDrag, dragDirection} = this.state
     let _maxOffsetY = contentSize.height - layoutMeasurement.height
-
-    console.log('onScroll===_maxOffsetY:' + _maxOffsetY + ';y:' + Math.ceil(y) + ';dragDirection:' + dragDirection + ';onDrag:' + onDrag + ';gestureStatus:' + gestureStatus + ';onScrollWithoutDrag:' + onScrollWithoutDrag + ';')
 
     //下拉
     if (dragDirection === 1) {
@@ -370,19 +364,16 @@ class PTRScrollComponent extends Component {
   }
 
   onTouchStart = (e) => {
-    console.log('onTouchStart')
     this.state.startPageY = e.nativeEvent.pageY
     this.props.onTouchStart instanceof Function && this.props.onTouchStart(e)
   }
 
   onTouchMove = (e) => {
-    console.log('onTouchMove')
     this.state.movePageY = e.nativeEvent.pageY
     this.props.onTouchMove instanceof Function && this.props.onTouchMove(e)
   }
 
   onScrollBeginDrag = (e) => {
-    console.log('xq debug===onScrollBeginDrag')
     this.state.onDrag = true
     this.state.dragDirection = 0
 
@@ -414,7 +405,6 @@ class PTRScrollComponent extends Component {
   }
 
   onScrollEndDrag = (e) => {
-    console.log('xq debug===onScrollEndDrag')
     this.state.onDrag = false
     this.state.startPageY = this.state.movePageY = 0
 
@@ -450,13 +440,11 @@ class PTRScrollComponent extends Component {
 
   onMomentumScrollBegin = (e) => {
     //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
-    console.log('xq debug===onMomentumScrollBegin')
     this.state.onScrollWithoutDrag = true
     this.props.onMomentumScrollBegin instanceof Function && this.props.onMomentumScrollBegin(e)
   }
 
   onMomentumScrollEnd = (e) => {
-    console.log('xq debug===onMomentumScrollEnd')
     this.state.onScrollWithoutDrag = false
 
     let {gestureStatus, dragDirection} = this.state
@@ -474,12 +462,10 @@ class PTRScrollComponent extends Component {
   }
 
   scrollViewLayout = (e) => {
-    console.log('===xq debug===scrollViewLayout')
     this.scrollViewHeight = e.nativeEvent.layout.height
   }
 
   scrollContentLayout = (e) => {
-    console.log('===xq debug===scrollContentLayout')
     this.scrollContentHeight = e.nativeEvent.layout.height
   }
 
@@ -505,7 +491,6 @@ class PTRScrollComponent extends Component {
 
   onPanResponderMove = (evt, gestureState) => {
     let _translateY = Math.ceil(Math.abs(gestureState.dy)) * 0.48
-    console.log('onPanResponderMove===_translateY:' + _translateY + ';l_onTopReached_up:' + this.state.l_onTopReached_up + ';gestureState.dy:' + gestureState.dy + ';G_PULL_DOWN_DISTANCE:' + G_PULL_DOWN_DISTANCE + ';this.state.p_currPullDistance:' + this.state.p_currPullDistance)
     //下拉刷新
     if (this.state.l_onTopReached_down && gestureState.dy > 0) {
       this.state.p_currPullDistance = _translateY >= G_PULL_DOWN_DISTANCE ? G_PULL_DOWN_DISTANCE : _translateY
@@ -671,5 +656,3 @@ export default class PTRScrollList extends Component {
     )
   }
 }
-
-const Styles = StyleSheet.create({});
