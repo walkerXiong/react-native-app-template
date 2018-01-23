@@ -12,7 +12,8 @@ import {
   ListView,
   FlatList,
   VirtualizedList,
-  PanResponder
+  PanResponder,
+  ActivityIndicator
 } from 'react-native'
 
 const {width, height} = Dimensions.get('window')
@@ -25,7 +26,7 @@ const
   G_STATUS_FOOTER_REFRESHING = 5;// 底部正在加载更多
 
 let
-  G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
+  G_PULL_UP_DISTANCE = 60,//上拉加载更多最大上拉距离
   G_PULL_UP_THRESHOLD = 10,
   G_PULL_DOWN_DISTANCE = 60,//下拉刷新下拉距离大于 60 时触发下拉刷新
   G_PULL_DOWN_THRESHOLD = 10,
@@ -33,7 +34,7 @@ let
 
 const _onHeaderRefreshing = () => {
   setTimeout(() => {
-    PTRScrollComponent.headerRefreshDone();
+    PTRScrollList.headerRefreshDone();
   }, 2000)
 }
 
@@ -55,7 +56,12 @@ const _renderHeaderRefresh = (gestureStatus) => {
       break
     case G_STATUS_HEADER_REFRESHING:
       return (
-        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+        <View style={{width, height: 60, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator
+            size={'small'}
+            animating={true}
+            color={'#75c5fe'}
+            style={{marginRight: 10}}/>
           <Text>{'正在刷新...'}</Text>
         </View>
       )
@@ -101,7 +107,7 @@ class HeaderRefresh extends Component {
 
 const _onFooterInfiniting = () => {
   setTimeout(() => {
-    RefresherListView.footerInfiniteDone()
+    PTRScrollList.footerInfiniteDone()
   }, 2000)
 }
 
@@ -123,7 +129,12 @@ const _renderFooterInfinite = (gestureStatus) => {
       break
     case G_STATUS_FOOTER_REFRESHING:
       return (
-        <View style={{width, height: 60, justifyContent: 'center', alignItems: 'center'}}>
+        <View style={{width, height: 60, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator
+            size={'small'}
+            animating={true}
+            color={'#75c5fe'}
+            style={{marginRight: 10}}/>
           <Text>{'正在加载...'}</Text>
         </View>
       )

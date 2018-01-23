@@ -25,12 +25,12 @@ const
   G_STATUS_FOOTER_REFRESHING = 5;// 底部正在加载更多
 
 let
-  G_PULL_UP_DISTANCE = 50,//上拉加载更多最大上拉距离
+  G_PULL_UP_DISTANCE = 60,//上拉加载更多最大上拉距离
   G_PULL_DOWN_DISTANCE = 60;//下拉刷新下拉距离大于 60 时触发下拉刷新
 
 const _onHeaderRefreshing = () => {
   setTimeout(() => {
-    RefresherListView.headerRefreshDone();
+    PTRScrollList.headerRefreshDone();
   }, 2000)
 }
 
@@ -98,7 +98,7 @@ class HeaderRefresh extends Component {
 
 const _onFooterInfiniting = () => {
   setTimeout(() => {
-    RefresherListView.footerInfiniteDone()
+    PTRScrollList.footerInfiniteDone()
   }, 2000)
 }
 
@@ -164,7 +164,7 @@ class FooterInfinite extends Component {
   }
 }
 
-export default class PTRScrollComponent extends Component {
+export default class PTRScrollList extends Component {
   static headerRefreshDone = () => null
   static footerInfiniteDone = () => null
 
@@ -206,8 +206,8 @@ export default class PTRScrollComponent extends Component {
       movePageY: 0,
       dragDirection: 0,//-1上拉 0无 1下拉
     }
-    PTRScrollComponent.headerRefreshDone = this._headerRefreshDone
-    PTRScrollComponent.footerInfiniteDone = this._footerInfiniteDone
+    PTRScrollList.headerRefreshDone = this._headerRefreshDone
+    PTRScrollList.footerInfiniteDone = this._footerInfiniteDone
   }
 
   _headerRefreshDone = () => {
