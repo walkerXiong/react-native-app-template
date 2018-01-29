@@ -7,12 +7,12 @@ import {
   View,
   StyleSheet,
   Dimensions,
-  Animated,
   Text,
   ScrollView,
   ListView,
   FlatList,
-  VirtualizedList
+  VirtualizedList,
+  DeviceEventEmitter
 } from 'react-native'
 import PropTypes from 'prop-types'
 
@@ -23,7 +23,9 @@ const
   G_STATUS_PULLING_DOWN = 2,// ListView 处于顶部，下拉刷新
   G_STATUS_RELEASE_TO_REFRESH = 3,// 拉动距离处于可触发刷新或者加载状态
   G_STATUS_HEADER_REFRESHING = 4,// 顶部正在刷新
-  G_STATUS_FOOTER_REFRESHING = 5;// 底部正在加载更多
+  G_STATUS_FOOTER_REFRESHING = 5,// 底部正在加载更多
+  EVENT_HEADER_REFRESH = 'PTR_SCROLL_LIST_HEADER_REFRESH_DONE',//刷新事件
+  EVENT_FOOTER_INFINITE = 'PTR_SCROLL_LIST_FOOTER_REFRESH_DONE'//加载事件
 
 let
   G_PULL_UP_DISTANCE = 60,//上拉加载更多最大上拉距离
@@ -68,25 +70,23 @@ const _renderHeaderRefresh = (gestureStatus) => {
 }
 
 class HeaderRefresh extends Component {
-  static setGestureStatus = (gestureStatus, callback) => null
-
   static defaultProps = {
     renderHeaderRefresh: () => null
   };
 
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       gestureStatus: G_STATUS_NONE,
     }
-    HeaderRefresh.setGestureStatus = this._setGestureStatus
+    props.getInstance instanceof Function && props.getInstance(this)
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     return nextState.gestureStatus !== this.state.gestureStatus
   }
 
-  _setGestureStatus = (gestureStatus, callback) => {
+  setGestureStatus = (gestureStatus, callback) => {
     if (gestureStatus !== this.state.gestureStatus) {
       this.setState({gestureStatus}, () => callback instanceof Function && callback())
     }
@@ -136,25 +136,23 @@ const _renderFooterInfinite = (gestureStatus) => {
 }
 
 class FooterInfinite extends Component {
-  static setGestureStatus = (gestureStatus, callback) => null
-
   static defaultProps = {
     renderFooterInfinite: () => null
   };
 
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       gestureStatus: G_STATUS_NONE,
     }
-    FooterInfinite.setGestureStatus = this._setGestureStatus
+    props.getInstance instanceof Function && props.getInstance(this)
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     return nextState.gestureStatus !== this.state.gestureStatus
   }
 
-  _setGestureStatus = (gestureStatus, callback) => {
+  setGestureStatus = (gestureStatus, callback) => {
     if (gestureStatus !== this.state.gestureStatus) {
       this.setState({gestureStatus}, () => callback instanceof Function && callback())
     }
@@ -166,8 +164,13 @@ class FooterInfinite extends Component {
 }
 
 export default class PTRScrollList extends Component {
-  static headerRefreshDone = () => null
-  static footerInfiniteDone = () => null
+  _headerRefreshDoneHandle = null//刷新操作完成监听句柄
+  _headerRefreshInstance = null//刷新头实例
+  _footerInfiniteDoneHandle = null//加载操作完成监听句柄
+  _footerInfiniteInstance = null//加载尾实例
+
+  static headerRefreshDone = () => DeviceEventEmitter.emit(EVENT_HEADER_REFRESH, true)
+  static footerInfiniteDone = () => DeviceEventEmitter.emit(EVENT_FOOTER_INFINITE, true)
 
   static propTypes = {
     scrollComponent: PropTypes.oneOf(['ScrollView', 'ListView', 'FlatList', 'VirtualizedList']).isRequired,
@@ -207,13 +210,21 @@ export default class PTRScrollList extends Component {
       movePageY: 0,
       dragDirection: 0,//-1上拉 0无 1下拉
     }
-    PTRScrollList.headerRefreshDone = this._headerRefreshDone
-    PTRScrollList.footerInfiniteDone = this._footerInfiniteDone
+  }
+
+  componentWillMount() {
+    this.props.enableHeaderRefresh ? this._headerRefreshDoneHandle = DeviceEventEmitter.addListener(EVENT_HEADER_REFRESH, this._headerRefreshDone) : null
+    this.props.enableFooterInfinite ? this._footerInfiniteDoneHandle = DeviceEventEmitter.addListener(EVENT_FOOTER_INFINITE, this._footerInfiniteDone) : null
+  }
+
+  componentWillUnmount() {
+    this._headerRefreshDoneHandle && this._headerRefreshDoneHandle.remove()
+    this._footerInfiniteDoneHandle && this._footerInfiniteDoneHandle.remove()
   }
 
   _headerRefreshDone = () => {
     this._setGestureStatus(G_STATUS_NONE, null, false, true)
-    this._scrollToPos(0, true)
+    !this.state.onScrollWithoutDrag && this._scrollToPos(0, true)
   }
 
   _footerInfiniteDone = () => {
@@ -224,7 +235,7 @@ export default class PTRScrollList extends Component {
   _setGestureStatus = (status, callback, refresh, updateHeader) => {
     this.state.gestureStatus = status
     if (refresh) {
-      updateHeader ? HeaderRefresh.setGestureStatus(status, callback) : FooterInfinite.setGestureStatus(status, callback)
+      updateHeader ? this._headerRefreshInstance.setGestureStatus(status, callback) : this._footerInfiniteInstance.setGestureStatus(status, callback)
     }
   }
 
@@ -250,36 +261,31 @@ export default class PTRScrollList extends Component {
 
     //下拉
     if (dragDirection === 1) {
-      if (gestureStatus === G_STATUS_NONE) {
-        if (onDrag) {
-          //开始下拉
-          if (y <= 0) {
+      //手指正在拖动视图
+      if (onDrag) {
+        if (gestureStatus === G_STATUS_PULLING_DOWN) {
+          if (y <= 0 && Math.abs(y) >= G_PULL_DOWN_DISTANCE) {
+            //释放刷新
+            this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, true)
+          }
+        }
+        else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+          if (y <= 0 && Math.abs(y) < G_PULL_DOWN_DISTANCE) {
+            //下拉刷新
             this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
           }
         }
-        else {
-          if (onScrollWithoutDrag) {
-            //当前状态为正在惯性滚动
-          }
-          else {
-            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
-            if (y === 0) {
-              //刷新完毕归位
-              this._setGestureStatus(G_STATUS_NONE, null, true, true)
-            }
-          }
-        }
       }
-      else if (gestureStatus === G_STATUS_PULLING_DOWN) {
-        //下拉刷新
-        if (y <= 0 && Math.abs(y) >= G_PULL_DOWN_DISTANCE) {
-          this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, true)
-        }
+      //交互操作之后，视图正在滚动
+      else if (onScrollWithoutDrag) {
+
       }
-      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-        //释放刷新
-        if (y <= 0 && Math.abs(y) < G_PULL_DOWN_DISTANCE) {
-          this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
+      //函数滚动，scrollTo，scrollTo不会触发 onMomentumScrollBegin
+      else {
+        if (gestureStatus === G_STATUS_NONE) {
+          if (y === 0) {
+            this._setGestureStatus(G_STATUS_NONE, null, true, true)
+          }
         }
       }
 
@@ -293,36 +299,30 @@ export default class PTRScrollList extends Component {
     }
     //上拉
     else if (dragDirection === -1) {
-      if (gestureStatus === G_STATUS_NONE) {
-        if (onDrag) {
-          //开始上拉
-          if (y >= _maxOffsetY) {
+      //手指正在拖动视图
+      if (onDrag) {
+        if (gestureStatus === G_STATUS_PULLING_UP) {
+          if (y - _maxOffsetY >= G_PULL_UP_DISTANCE) {
+            //释放加载
+            this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, false)
+          }
+        }
+        else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
+          if (y - _maxOffsetY < G_PULL_UP_DISTANCE) {
+            //上拉加载
             this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
           }
         }
-        else {
-          if (onScrollWithoutDrag) {
-            //当前状态为正在惯性滚动
-          }
-          else {
-            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
-            if (y <= _maxOffsetY) {
-              //刷新完毕归位
-              this._setGestureStatus(G_STATUS_NONE, null, true, false)
-            }
-          }
-        }
       }
-      else if (gestureStatus === G_STATUS_PULLING_UP) {
-        //上拉加载
-        if (y - _maxOffsetY >= G_PULL_UP_DISTANCE) {
-          this._setGestureStatus(G_STATUS_RELEASE_TO_REFRESH, null, true, false)
-        }
+      //交互操作之后，视图正在滚动
+      else if (onScrollWithoutDrag) {
+
       }
-      else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-        //释放刷新
-        if (y - _maxOffsetY < G_PULL_UP_DISTANCE) {
-          this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
+      //函数滚动，scrollTo，scrollTo不会触发 onMomentumScrollBegin
+      else {
+        if (y <= _maxOffsetY) {
+          //加载完毕归位
+          this._setGestureStatus(G_STATUS_NONE, null, true, false)
         }
       }
 
@@ -334,9 +334,12 @@ export default class PTRScrollList extends Component {
         this._footerInfinite.setNativeProps({style: {transform: [{translateY: 0}]}})
       }
     }
+    //未确定方向，可能从中部下拉到下拉刷新的阈值，也可能是从中部上拉到上拉加载的阈值
     else {
-      if (gestureStatus === G_STATUS_NONE) {
-        if (onDrag) {
+      //手指正在拖动视图
+      if (onDrag) {
+        //无状态
+        if (gestureStatus === G_STATUS_NONE) {
           //开始下拉
           if (y <= 0) {
             this.state.dragDirection = 1
@@ -348,20 +351,21 @@ export default class PTRScrollList extends Component {
             this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
           }
         }
-        else {
-          if (onScrollWithoutDrag) {
-            //当前状态为正在惯性滚动
+      }
+      //交互操作之后，视图正在滚动
+      else if (onScrollWithoutDrag) {
+
+      }
+      //函数滚动，scrollTo，scrollTo不会触发 onMomentumScrollBegin
+      else {
+        if (gestureStatus === G_STATUS_NONE) {
+          if (y === 0) {
+            //刷新完毕归位
+            this._setGestureStatus(G_STATUS_NONE, null, true, true)
           }
-          else {
-            //scrollTo 设置 animated 为 true 时，不会触发 onMomentumScrollBegin
-            if (y === 0) {
-              //刷新完毕归位
-              this._setGestureStatus(G_STATUS_NONE, null, true, true)
-            }
-            else if (y <= _maxOffsetY) {
-              //加载完毕归位
-              this._setGestureStatus(G_STATUS_NONE, null, true, false)
-            }
+          else if (y <= _maxOffsetY) {
+            //加载完毕归位
+            this._setGestureStatus(G_STATUS_NONE, null, true, false)
           }
         }
       }
@@ -386,13 +390,12 @@ export default class PTRScrollList extends Component {
 
     let {contentOffset, contentSize, layoutMeasurement} = e.nativeEvent
     let {gestureStatus, startPageY, movePageY} = this.state
-
     if (layoutMeasurement.height >= contentSize.height) {
       //不足一屏
       if (movePageY > startPageY) {
         //下拉
-        this.state.dragDirection = 1
-        if (gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+        if (gestureStatus !== G_STATUS_HEADER_REFRESHING && gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+          this.state.dragDirection = 1
           this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
         }
       }
@@ -409,8 +412,8 @@ export default class PTRScrollList extends Component {
         //到顶部
         if (movePageY > startPageY) {
           //下拉
-          this.state.dragDirection = 1
-          if (gestureStatus !== G_STATUS_HEADER_REFRESHING) {
+          if (gestureStatus !== G_STATUS_HEADER_REFRESHING && gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+            this.state.dragDirection = 1
             this._setGestureStatus(G_STATUS_PULLING_DOWN, null, true, true)
           }
         }
@@ -419,8 +422,8 @@ export default class PTRScrollList extends Component {
         //到底部
         if (movePageY < startPageY) {
           //上拉
-          this.state.dragDirection = -1
-          if (gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+          if (gestureStatus !== G_STATUS_HEADER_REFRESHING && gestureStatus !== G_STATUS_FOOTER_REFRESHING) {
+            this.state.dragDirection = -1
             this._setGestureStatus(G_STATUS_PULLING_UP, null, true, false)
           }
         }
@@ -436,14 +439,15 @@ export default class PTRScrollList extends Component {
 
     let {gestureStatus, dragDirection} = this.state
     let {contentSize, layoutMeasurement} = e.nativeEvent
+    let _maxOffsetY = contentSize.height - layoutMeasurement.height
     //下拉
     if (dragDirection === 1) {
       if (gestureStatus === G_STATUS_PULLING_DOWN) {
         this._setGestureStatus(G_STATUS_NONE, null, false, true)
       }
       else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-        this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
         this._setGestureStatus(G_STATUS_HEADER_REFRESHING, null, true, true)
+        this.props.onHeaderRefreshing instanceof Function && this.props.onHeaderRefreshing()
         this._scrollToPos(-G_PULL_DOWN_DISTANCE, false)
       }
     }
@@ -453,9 +457,9 @@ export default class PTRScrollList extends Component {
         this._setGestureStatus(G_STATUS_NONE, null, false, false)
       }
       else if (gestureStatus === G_STATUS_RELEASE_TO_REFRESH) {
-        this.props.onFooterInfiniting instanceof Function && this.props.onFooterInfiniting()
         this._setGestureStatus(G_STATUS_FOOTER_REFRESHING, null, true, false)
-        this._scrollToPos(contentSize.height - layoutMeasurement.height + G_PULL_UP_DISTANCE, false)
+        this.props.onFooterInfiniting instanceof Function && this.props.onFooterInfiniting()
+        this._scrollToPos(_maxOffsetY + G_PULL_UP_DISTANCE, false)
       }
     }
 
@@ -503,7 +507,8 @@ export default class PTRScrollList extends Component {
               translateY: -height
             }]
           }]}>
-          {enableHeaderRefresh ? <HeaderRefresh {...this.props}/> : null}
+          {enableHeaderRefresh ?
+            <HeaderRefresh getInstance={ins => this._headerRefreshInstance = ins} {...this.props}/> : null}
         </View>
         <View
           ref={ref => this._footerInfinite = ref}
@@ -513,7 +518,8 @@ export default class PTRScrollList extends Component {
               translateY: height
             }]
           }]}>
-          {enableFooterInfinite ? <FooterInfinite {...this.props}/> : null}
+          {enableFooterInfinite ?
+            <FooterInfinite getInstance={ins => this._footerInfiniteInstance = ins} {...this.props}/> : null}
         </View>
         {
           React.cloneElement(ScrollComponent, {
@@ -522,6 +528,7 @@ export default class PTRScrollList extends Component {
               this.props.getRef instanceof Function && this.props.getRef(ref)
             },
             scrollEventThrottle: this.props.scrollEventThrottle || 4,
+            contentContainerStyle: this.props.contentContainerStyle || {backgroundColor: '#ffffff'},
             onTouchStart: this.onTouchStart,
             onTouchMove: this.onTouchMove,
             onScroll: this.onScroll,
