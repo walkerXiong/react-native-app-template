@@ -4,9 +4,9 @@
 import {StackNavigator} from 'react-navigation';
 import {FadeToTheLeft} from './transitionConfig';
 
-// import MainScreen from '../testView/main';
+import MainScreen from '../testView/main';
 // import MainScreen from '../components/refreshableListView/example';
-import MainScreen from '../components/refreshableListView/example';
+// import MainScreen from '../components/refreshableListView/example';
 // import MainScreen from '../components/refreshableListView/attemptScroll';
 import RouterTestPage from '../testView/routerTestPage';
 export const MainApp = StackNavigator({

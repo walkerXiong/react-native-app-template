@@ -15,9 +15,11 @@ import {
     Modal
 } from 'react-native';
 import Util from '../../utility/util';
+import CommonSize from '../../utility/size';
 import * as KBEvent from './KBEvent';
 import HBStyle from '../../styles/standard';
 
+const {width, height, pixel} = CommonSize;
 const debugKeyWord = '[NumericKeyboard]';
 export default class NumericKeyboard extends Component {
     _keyBoardShowHandle = null;
@@ -114,11 +116,11 @@ export default class NumericKeyboard extends Component {
                 <View style={Styles.wrap}>
                     <TouchableOpacity
                         activeOpacity={1}
-                        style={{flex: 1, width: Util.size.screen.width}}
+                        style={{flex: 1, width}}
                         onPress={this._onRequestClose.bind(this)}/>
                     <Animated.View style={[Styles.keyboardWrap, {transform: [{translateY: this.state.translatePosY}]}]}>
                         <View style={[Styles.container, {
-                            borderTopWidth: Util.size.screen.pixel,
+                            borderTopWidth: pixel,
                             borderTopColor: '#d2d2d2'
                         }]}>
                             <TouchableHighlight
@@ -235,7 +237,7 @@ const Styles = StyleSheet.create({
         alignItems: 'center',
     },
     keyboardWrap: {
-        width: Util.size.screen.width,
+        width,
         height: 240,
         flexDirection: 'column',
         justifyContent: 'flex-start',
@@ -247,7 +249,7 @@ const Styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        borderBottomWidth: Util.size.screen.pixel,
+        borderBottomWidth: pixel,
         borderBottomColor: '#d2d2d2'
     },
     section: {
@@ -256,7 +258,7 @@ const Styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRightWidth: Util.size.screen.pixel,
+        borderRightWidth: pixel,
         borderRightColor: '#d2d2d2'
     },
     keyFont: {

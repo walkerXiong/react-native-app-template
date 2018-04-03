@@ -6,7 +6,6 @@ import Svg, {Defs, Stop, G, Path, LinearGradient, Line} from 'react-native-svg'
 import {arc} from 'd3-shape'
 import SingleLinearGradient from 'react-native-linear-gradient'
 
-
 export default class TestPage extends Component {
   constructor(props) {
     super(props);

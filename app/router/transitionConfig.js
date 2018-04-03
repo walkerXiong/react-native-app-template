@@ -34,302 +34,302 @@ import {I18nManager, Easing, Animated} from 'react-native';
 
 // Define scene transition params
 const transitionSpec = {
-    duration: 350,
-    easing: Easing.out(Easing.poly(5)), // decelerate
-    timing: Animated.timing,
+  duration: 350,
+  easing: Easing.out(Easing.poly(5)), // decelerate
+  timing: Animated.timing,
 };
 
 const IOSTransitionSpec = ({
-    duration: 500,
-    easing: Easing.bezier(0.2833, 0.99, 0.31833, 0.99),
-    timing: Animated.timing,
+  duration: 500,
+  easing: Easing.bezier(0.2833, 0.99, 0.31833, 0.99),
+  timing: Animated.timing,
 });
 
 export const Android_Default = () => {
-    return {
-        transitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene} = sceneProps;
-            const {index} = scene;
-            const inputRange = [index - 1, index, index + 0.99, index + 1];
+  return {
+    transitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene} = sceneProps;
+      const {index} = scene;
+      const inputRange = [index - 1, index, index + 0.99, index + 1];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange,
-                outputRange: [0, 1, 1, 0],
-            });
-            const translateY = position.interpolate({
-                inputRange,
-                outputRange: [50, 0, 0, 0],
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange,
+        outputRange: [0, 1, 1, 0],
+      });
+      const translateY = position.interpolate({
+        inputRange,
+        outputRange: [50, 0, 0, 0],
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {translateY}
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {translateY}
+        ]
+      };
     }
+  }
 };
 
 export const IOS_Default = () => {
-    return {
-        IOSTransitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene, layout} = sceneProps;
-            const {index} = scene;
-            const width = layout.initWidth;
-            const inputRange = [index - 1, index, index + 1];
-            const outputRange = I18nManager.isRTL ? [-width, 0, 30] : [width, 0, -30];
+  return {
+    IOSTransitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene, layout} = sceneProps;
+      const {index} = scene;
+      const width = layout.initWidth;
+      const inputRange = [index - 1, index, index + 1];
+      const outputRange = I18nManager.isRTL ? [-width, 0, 30] : [width, 0, -30];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange: ([
-                    index - 1,
-                    index - 0.99,
-                    index,
-                    index + 0.99,
-                    index + 1,
-                ]),
-                outputRange: ([0, 1, 1, 0.3, 0]),
-            });
-            const translateY = 0;
-            const translateX = position.interpolate({
-                inputRange,
-                outputRange,
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange: ([
+          index - 1,
+          index - 0.99,
+          index,
+          index + 0.99,
+          index + 1,
+        ]),
+        outputRange: ([0, 1, 1, 0.3, 0]),
+      });
+      const translateY = 0;
+      const translateX = position.interpolate({
+        inputRange,
+        outputRange,
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {translateX},
-                    {translateY}
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {translateX},
+          {translateY}
+        ]
+      };
     }
+  }
 };
 
 export const Horizontal_RToL_Scale_Opacity_TranslateX = () => {
-    return {
-        transitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene, layout} = sceneProps;
-            const {index} = scene;
-            const width = layout.initWidth;
-            const inputRange = [index - 1, index, index + 0.999, index + 1];
-            const outputRange = I18nManager.isRTL ? [-width, 0, 10, 10] : [width, 0, -10, -10];
+  return {
+    transitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene, layout} = sceneProps;
+      const {index} = scene;
+      const width = layout.initWidth;
+      const inputRange = [index - 1, index, index + 0.999, index + 1];
+      const outputRange = I18nManager.isRTL ? [-width, 0, 10, 10] : [width, 0, -10, -10];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange,
-                outputRange: [1, 1, 0.3, 0],
-            });
-            const scale = position.interpolate({
-                inputRange,
-                outputRange: ([1, 1, 0.95, 0.95]),
-            });
-            const translateX = position.interpolate({
-                inputRange,
-                outputRange,
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange,
+        outputRange: [1, 1, 0.3, 0],
+      });
+      const scale = position.interpolate({
+        inputRange,
+        outputRange: ([1, 1, 0.95, 0.95]),
+      });
+      const translateX = position.interpolate({
+        inputRange,
+        outputRange,
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {scale},
-                    {translateX}
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {scale},
+          {translateX}
+        ]
+      };
     }
+  }
 };
 
 export const Horizontal_RToL_Opacity_TranslateX = () => {
-    return {
-        transitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene, layout} = sceneProps;
-            const {index} = scene;
-            const width = layout.initWidth;
-            const inputRange = [index - 1, index, index + 0.999, index + 1];
-            const outputRange = I18nManager.isRTL ? [-width, 0, 10, 10] : [width, 0, -10, -10];
+  return {
+    transitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene, layout} = sceneProps;
+      const {index} = scene;
+      const width = layout.initWidth;
+      const inputRange = [index - 1, index, index + 0.999, index + 1];
+      const outputRange = I18nManager.isRTL ? [-width, 0, 10, 10] : [width, 0, -10, -10];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange,
-                outputRange: [1, 1, 0.3, 0],
-            });
-            const translateX = position.interpolate({
-                inputRange,
-                outputRange,
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange,
+        outputRange: [1, 1, 0.3, 0],
+      });
+      const translateX = position.interpolate({
+        inputRange,
+        outputRange,
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {translateX},
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {translateX},
+        ]
+      };
     }
+  }
 };
 
 export const Horizontal_RToL_Opacity = () => {
-    return {
-        transitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene, layout} = sceneProps;
-            const {index} = scene;
-            const width = layout.initWidth;
-            const inputRange = [index - 1, index, index + 0.999, index + 1];
-            const outputRange = I18nManager.isRTL ? [-width, 0, 0, 0] : [width, 0, 0, 0];
+  return {
+    transitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene, layout} = sceneProps;
+      const {index} = scene;
+      const width = layout.initWidth;
+      const inputRange = [index - 1, index, index + 0.999, index + 1];
+      const outputRange = I18nManager.isRTL ? [-width, 0, 0, 0] : [width, 0, 0, 0];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange,
-                outputRange: [1, 1, 0.3, 0],
-            });
-            const translateX = position.interpolate({
-                inputRange,
-                outputRange,
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange,
+        outputRange: [1, 1, 0.3, 0],
+      });
+      const translateX = position.interpolate({
+        inputRange,
+        outputRange,
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {translateX},
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {translateX},
+        ]
+      };
     }
+  }
 };
 
 export const Horizontal_RToL_Scale_Opacity = () => {
-    return {
-        transitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene, layout} = sceneProps;
-            const {index} = scene;
-            const width = layout.initWidth;
-            const inputRange = [index - 1, index, index + 0.999, index + 1];
-            const outputRange = I18nManager.isRTL ? [-width, 0, 0, 0] : [width, 0, 0, 0];
+  return {
+    transitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene, layout} = sceneProps;
+      const {index} = scene;
+      const width = layout.initWidth;
+      const inputRange = [index - 1, index, index + 0.999, index + 1];
+      const outputRange = I18nManager.isRTL ? [-width, 0, 0, 0] : [width, 0, 0, 0];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange,
-                outputRange: [1, 1, 0.3, 0],
-            });
-            const scale = position.interpolate({
-                inputRange,
-                outputRange: ([1, 1, 0.95, 0.95]),
-            });
-            const translateX = position.interpolate({
-                inputRange,
-                outputRange,
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange,
+        outputRange: [1, 1, 0.3, 0],
+      });
+      const scale = position.interpolate({
+        inputRange,
+        outputRange: ([1, 1, 0.95, 0.95]),
+      });
+      const translateX = position.interpolate({
+        inputRange,
+        outputRange,
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {scale},
-                    {translateX}
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {scale},
+          {translateX}
+        ]
+      };
     }
+  }
 };
 
 export const FadeIn = () => {
-    return {
-        transitionSpec,
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene} = sceneProps;
-            const {index} = scene;
-            const inputRange = [index - 1, index, index + 1];
+  return {
+    transitionSpec,
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene} = sceneProps;
+      const {index} = scene;
+      const inputRange = [index - 1, index, index + 1];
 
-            //part-2: define transition animation
-            const opacity = position.interpolate({
-                inputRange,
-                outputRange: [0, 1, 0],
-            });
+      //part-2: define transition animation
+      const opacity = position.interpolate({
+        inputRange,
+        outputRange: [0, 1, 0],
+      });
 
-            //part-3 return
-            return {
-                opacity
-            };
-        }
+      //part-3 return
+      return {
+        opacity
+      };
     }
+  }
 };
 
 export const FadeToTheLeft = () => {//navigator 的默认动画
-    return {
-        transitionSpec: {
-            duration: 260,
-            easing: Easing.bezier(0.27, 0.58, 0.38, 1),
-            timing: Animated.spring,
-            //spring config (ps: View /node_modules/react-navigation/src/views/Transitioner.js)
-            velocity: 1.5,  // Velocity makes it move
-            tension: 200, // Slow
-            friction: 26,  // Oscillate a lot
-            useNativeDriver: true, //RN 0.43 以上支持
-        },
-        // Define scene interpolation, eq. custom transition
-        screenInterpolator: (sceneProps) => {
-            //part-1: prepare for some params
-            const {position, scene, layout} = sceneProps;
-            const {index} = scene;
-            const {initWidth} = layout;
+  return {
+    transitionSpec: {
+      duration: 260,
+      easing: Easing.bezier(0.27, 0.58, 0.38, 1),
+      timing: Animated.spring,
+      //spring config (ps: View /node_modules/react-navigation/src/views/Transitioner.js)
+      velocity: 1.5,  // Velocity makes it move
+      tension: 200, // Slow
+      friction: 26,  // Oscillate a lot
+      useNativeDriver: true, //RN 0.43 以上支持
+    },
+    // Define scene interpolation, eq. custom transition
+    screenInterpolator: (sceneProps) => {
+      //part-1: prepare for some params
+      const {position, scene, layout} = sceneProps;
+      const {index} = scene;
+      const {initWidth} = layout;
 
-            //part-2: define transition animation
-            //透明度
-            const opacity = position.interpolate({
-                inputRange: [index - 1, index, index + 0.99, index + 1],
-                outputRange: [1, 1, 0.4, 0],
-            });
+      //part-2: define transition animation
+      //透明度
+      const opacity = position.interpolate({
+        inputRange: [index - 1, index, index + 0.99, index + 1],
+        outputRange: [1, 1, 0.4, 0],
+      });
 
-            //缩放
-            const scale = position.interpolate({
-                inputRange: [index - 1, index, index + 1],
-                outputRange: [1, 1, 0.95],
-            });
+      //缩放
+      const scale = position.interpolate({
+        inputRange: [index - 1, index, index + 1],
+        outputRange: [1, 1, 0.95],
+      });
 
-            //横向位移
-            const _width = Math.round(initWidth * 0.3);
-            const translateX = position.interpolate({
-                inputRange: [index - 1, index, index + 1],
-                outputRange: [initWidth, 0, -_width],
-            });
+      //横向位移
+      const _width = Math.round(initWidth * 0.3);
+      const translateX = position.interpolate({
+        inputRange: [index - 1, index, index + 1],
+        outputRange: [initWidth, 0, -_width],
+      });
 
-            //part-3 return
-            return {
-                opacity,
-                transform: [
-                    {scale},
-                    {translateX},
-                ]
-            };
-        }
+      //part-3 return
+      return {
+        opacity,
+        transform: [
+          {scale},
+          {translateX},
+        ]
+      };
     }
+  }
 };

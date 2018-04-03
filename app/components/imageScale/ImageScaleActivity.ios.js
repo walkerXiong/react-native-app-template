@@ -12,11 +12,11 @@ import {
     ScrollView
 } from 'react-native';
 
-import Util from '../utility/util';
+import Util from '../../utility/util';
 
 const debugKeyWord = '[ImageScaleActivity]';
 const screenWidth = Util.size.screen.width;
-const screenHeight = Util.platformAndroid() ? Util.size.screen.height - Util.size.statusBar.height : Util.size.screen.height;
+const screenHeight = Util.platformAndroid ? Util.size.screen.height - Util.size.statusBar.height : Util.size.screen.height;
 
 class ImageScaleActivity extends Component {
 

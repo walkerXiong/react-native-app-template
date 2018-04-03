@@ -14,7 +14,7 @@ import {
 import {observable, action, autorun, computed} from 'mobx';
 import {observer, Provider, inject} from 'mobx-react/native';
 import AppStore from '../stores/testView/testPage';
-import NavActivity from '../components/NavActivity';
+import NavActivity from '../components/C_NavActivity';
 import SecuredPayKeyboard from '../components/keyboard/SecuredPayKeyboard';
 
 @inject('store', 'navigation') @observer
