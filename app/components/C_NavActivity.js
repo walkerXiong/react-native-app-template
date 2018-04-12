@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
+  ViewPropTypes
 } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -161,7 +162,7 @@ export default class NavActivity extends Component {
     leftButton: PropTypes.object,
     closeButton: PropTypes.object,
     customButton: PropTypes.object,
-    navStyle: View.propTypes.style,
+    navStyle: ViewPropTypes.style,
     refFunc: PropTypes.func
   };
 

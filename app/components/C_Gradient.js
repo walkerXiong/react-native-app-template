@@ -7,7 +7,8 @@ import {
   Text,
   View,
   TouchableHighlight,
-  Dimensions
+  Dimensions,
+  ViewPropTypes
 } from 'react-native';
 import PropTypes from 'prop-types';
 import shallowCompare from 'react-addons-shallow-compare';
@@ -22,7 +23,7 @@ export default class NGradient extends Component {
   _defaultContentText = '';
 
   static propTypes = {
-    wrapStyle: View.propTypes.style,
+    wrapStyle: ViewPropTypes.style,
     btnType: PropTypes.string,
     emptyBtn: PropTypes.bool,
     countDownBtn: PropTypes.bool,

@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
   Text,
   StyleSheet,
+  ViewPropTypes,
 } from 'react-native';
 import PropTypes from 'prop-types';
 const ColorPropType = require('ColorPropType');
@@ -20,9 +21,9 @@ export default class TestPage extends Component {
   _indicatorShineCount = 0;
 
   static propTypes = {
-    wrapStyle: View.propTypes.style,
+    wrapStyle: ViewPropTypes.style,
     textStyle: Text.propTypes.style,
-    indicatorStyle: View.propTypes.style,
+    indicatorStyle: ViewPropTypes.style,
     placeholder: PropTypes.node,
     placeholderTextColor: ColorPropType,
     maxLength: PropTypes.number,
