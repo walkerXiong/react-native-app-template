@@ -10,10 +10,11 @@
  *  Doc: https://gka.github.io/chroma.js/
  *  install: npm install chroma-js --save
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
   StyleSheet
 } from 'react-native';
+import PropTypes from 'prop-types';
 import LinearGradient from 'react-native-linear-gradient';
 import Chroma from 'chroma-js';
 import shallowCompare from 'react-addons-shallow-compare';

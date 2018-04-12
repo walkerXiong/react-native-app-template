@@ -1,12 +1,13 @@
 /**
  * Created by hebao on 2017/7/26.
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
     StyleSheet,
     Image,
     ScrollView
 }from 'react-native';
+import PropTypes from 'prop-types';
 import Util from '../utility/util';
 
 const debugKeyWord = '[FullImageWithScroll]';

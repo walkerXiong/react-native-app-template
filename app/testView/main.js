@@ -58,10 +58,9 @@ export default class MainTestPage extends Component {
         <NavActivity title={{title: '主页'}}/>
         <TouchableOpacity
           style={Styles.btn}
-          onPress={() => Util.actionSheet.show({buttons: [{title: '12345'}, {title: '54321'}, {title: '13579'}]})}>
+          onPress={() => Util.actionSheet.show({buttons: [{title: '12345', callback: ()=>this.props.navigation.navigator('NextPage')}, {title: '54321'}, {title: '13579'}]})}>
           <Text>{'显示 action sheet'}</Text>
         </TouchableOpacity>
-        <AniLinearImg />
       </View>
     )
   }

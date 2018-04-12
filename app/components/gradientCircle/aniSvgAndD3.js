@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from 'react'
+import React, {Component} from 'react'
+import PropTypes from 'prop-types'
 import {StyleSheet, View} from 'react-native'
 import Svg, {Defs, Stop, G, Path, LinearGradient} from 'react-native-svg'
 import {arc, line} from 'd3-shape'

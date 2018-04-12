@@ -5,10 +5,11 @@
  *  so ,this component birth to solve this problem.
  *  the scene to use it is you need to set Text content frequently , like number scroll up
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
     Text
 } from 'react-native';
+import PropTypes from 'prop-types';
 import shallowCompare from 'react-addons-shallow-compare';
 
 import Util from '../utility/util';

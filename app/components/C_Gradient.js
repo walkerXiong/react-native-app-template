@@ -1,7 +1,7 @@
 /**
  * Created by hebao on 2017/9/9.
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
   TouchableHighlight,
   Dimensions
 } from 'react-native';
+import PropTypes from 'prop-types';
 import shallowCompare from 'react-addons-shallow-compare';
 import LinearGradient from 'react-native-linear-gradient';
 

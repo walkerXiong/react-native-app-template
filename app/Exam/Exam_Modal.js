@@ -2,7 +2,7 @@
  * Created by hebao on 2017/5/12.
  */
 'use strict';
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
     View,
     StyleSheet,
@@ -11,6 +11,7 @@ import {
     ViewPropTypes,
     Modal
 } from 'react-native';
+import PropTypes from 'prop-types';
 import shallowCompare from 'react-addons-shallow-compare';
 
 import Util from '../utility/util';

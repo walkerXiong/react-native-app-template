@@ -2,13 +2,14 @@
  * Created by hebao on 2017/7/5.
  */
 'use strict';
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
   View,
   TouchableWithoutFeedback,
   Text,
   StyleSheet,
 } from 'react-native';
+import PropTypes from 'prop-types';
 const ColorPropType = require('ColorPropType');
 import shallowCompare from 'react-addons-shallow-compare';
 import HBStyle from '../../styles/standard';

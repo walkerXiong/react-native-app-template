@@ -1,7 +1,7 @@
 /**
  * Created by hebao on 2017/10/21.
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
   View,
   StyleSheet,

@@ -2,11 +2,12 @@
  * Created by hebao on 2017/5/22.
  * this component's main job is to realize fps animation
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
   View,
   Image
 } from 'react-native';
+import PropTypes from 'prop-types';
 
 const debugKeyWord = '[FrameAnimation]';
 export default class FrameAnimation extends Component {

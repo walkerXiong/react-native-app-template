@@ -2,7 +2,7 @@
  * Created by hebao on 2017/6/13.
  */
 'use strict';
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {
     View,
     Text,
@@ -14,6 +14,7 @@ import {
     Image,
     Modal
 } from 'react-native';
+import PropTypes from 'prop-types';
 import Util from '../../utility/util';
 import CommonSize from '../../utility/size';
 import * as KBEvent from './KBEvent';
