@@ -23,14 +23,28 @@ import {SwitchNavigator, TabNavigator, StackNavigator} from 'react-navigation';
 import {FadeToTheLeft} from './utility/transitionConfig';
 import Routers from './stores/routers';
 
+import TabBarComponent from './testView/tabBarComponent'
+
 import Login from './testView/login'
-import Home from './testView/home'
-import Mine from './testView/mine'
-import Setting from './testView/setting'
+import Tab1 from './testView/tab1'
+import Tab2 from './testView/tab2'
+import Tab3 from './testView/tab3'
+import Tab4 from './testView/tab4'
+import Page1 from './testView/page1'
+import Page2 from './testView/page2'
+import Page3 from './testView/page3'
+import Page4 from './testView/page4'
 
 const Tab = TabNavigator({
-  Home: {screen: Home},
-  Mine: {screen: Mine}
+  Tab1: {screen: Tab1},
+  Tab2: {screen: Tab2},
+  Tab3: {screen: Tab3},
+  Tab4: {screen: Tab4},
+}, {
+  tabBarComponent: TabBarComponent,
+  tabBarPosition: 'bottom',
+  swipeEnabled: false,
+  animationEnabled: false
 })
 
 /**
@@ -38,7 +52,10 @@ const Tab = TabNavigator({
  */
 const Stack = StackNavigator({
   Tab: {screen: Tab},
-  Setting: {screen: Setting}
+  Page1: {screen: Page1},
+  Page2: {screen: Page2},
+  Page3: {screen: Page3},
+  Page4: {screen: Page4},
 }, {
   headerMode: 'none',
   navigationOptions: {gesturesEnabled: true},

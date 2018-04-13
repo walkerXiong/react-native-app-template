@@ -9,13 +9,20 @@ let TestPageStore = observable({
   },
 
   @observable state: {//本地状态
-    wifiName: 'walkerXiong',
+    wifiName: 'CMCC-Net',
   },
 
   @action updateData(data) {
     TestPageStore.data = {
       ...TestPageStore.data,
       ...data
+    };
+  },
+
+  @action updateState(state) {
+    TestPageStore.state = {
+      ...TestPageStore.state,
+      ...state
     };
   },
 });

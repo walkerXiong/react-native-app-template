@@ -16,7 +16,7 @@ class Detail extends Component {
             Routers.navStack.dispatch(
               NavigationActions.navigate({
                 type: NavigationActions.NAVIGATE,
-                routeName: 'Setting'
+                routeName: 'Page1'
               })
             )
           }}>
@@ -27,11 +27,11 @@ class Detail extends Component {
   }
 }
 
-class Mine extends Component {
+class Home extends Component {
   render() {
     return (
       <View style={Styles.wrap}>
-        <Text>{'mine!!!'}</Text>
+        <Text>{'tab3!!!'}</Text>
         <TouchableOpacity
           style={Styles.btn}
           onPress={() => {
@@ -45,7 +45,7 @@ class Mine extends Component {
 }
 
 const MainPage = StackNavigator({
-  Mine: {screen: Mine},
+  Home: {screen: Home},
   Detail: {screen: Detail},
 }, {
   headerMode: 'none',
@@ -59,7 +59,7 @@ const Styles = StyleSheet.create({
   wrap: {
     flex: 1,
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center'
   },
   btn: {

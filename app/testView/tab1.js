@@ -16,7 +16,7 @@ class Detail extends Component {
             Routers.navStack.dispatch(
               NavigationActions.navigate({
                 type: NavigationActions.NAVIGATE,
-                routeName: 'Setting'
+                routeName: 'Page1'
               })
             )
           }}>
@@ -31,7 +31,7 @@ class Home extends Component {
   render() {
     return (
       <View style={Styles.wrap}>
-        <Text>{'home!!!'}</Text>
+        <Text>{'tab1!!!'}</Text>
         <TouchableOpacity
           style={Styles.btn}
           onPress={() => {
@@ -59,7 +59,7 @@ const Styles = StyleSheet.create({
   wrap: {
     flex: 1,
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center'
   },
   btn: {
